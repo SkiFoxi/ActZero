@@ -1,0 +1,85 @@
+/* ===== 3D карточки ===== */
+.card-3d {
+  height: 300px; /* md: 350px */
+  perspective: 1000px;
+}
+
+@media (min-width: 768px) {
+  .card-3d {
+    height: 350px;
+  }
+}
+
+.card-3d-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.7s;
+  transform-style: preserve-3d;
+}
+
+.group:hover .card-3d-inner {
+  transform: rotateY(180deg);
+}
+
+.card-3d-front,
+.card-3d-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.5rem;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  backface-visibility: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+}
+
+.card-3d-front {
+  background-color: white;
+}
+
+.card-3d-back {
+  background: linear-gradient(145deg, #1f2937, #111827);
+  color: white;
+  transform: rotateY(180deg);
+  justify-content: space-between;
+}
+
+.video-back {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1rem;
+}
+
+.sedlarka {
+  width: 600px;
+  height: 600px;
+}
+
+/* ===== Дополнительные стили для видео (плавность) ===== */
+video {
+  pointer-events: none; /* чтобы видео не перехватывало hover */
+}
+
+/* ===== Адаптивные корректировки для иконок-эмодзи ===== */
+.bg-blue-600, .bg-purple-600, .bg-green-600, .bg-orange-600 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem; /* для эмодзи */
+}
+
+/* ===== Кнопки и ссылки (плавные переходы) ===== */
+button, a {
+  transition: all 0.2s ease;
+}
+
+/* ===== Стили для футера (подписка) ===== */
+input:focus {
+  outline: none;
+  ring: 2px solid #3b82f6;
+}

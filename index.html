@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ActZero — полный макет</title>
+  <!-- Tailwind CSS (через CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Пользовательские стили для 3D и видео -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="min-h-screen bg-white">
+
+  <!-- ШАПКА -->
+  <header class="px-4 md:px-8 py-4 flex items-center justify-between max-w-[1440px] mx-auto">
+    <div class="text-xl md:text-2xl font-bold">ActZero</div>
+    <nav class="hidden md:flex items-center gap-8">
+      <a href="#" class="text-gray-700 hover:text-black">Частным лицам</a>
+      <a href="#" class="text-gray-700 hover:text-black">Бизнесу</a>
+      <a href="#" class="text-gray-700 hover:text-black">Веб-мастерам</a>
+      <button class="px-6 py-3 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+        Перейти в кабинет
+      </button>
+    </nav>
+    <button class="md:hidden p-2 text-2xl">☰</button>
+  </header>
+
+  <!-- ГЕРОЙ -->
+  <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+      <div>
+        <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+          ActZero найдёт клиентов для бизнеса и предпринимателей
+        </h1>
+        <p class="text-lg md:text-xl text-gray-600 mb-8">
+          Покажем объявления тем, кто ищет ваши товары и услуги прямо сейчас
+        </p>
+        <button class="px-6 md:px-8 py-3 md:py-4 rounded-full bg-blue-600 text-white text-base md:text-lg font-medium hover:bg-blue-700 transition-colors">
+          Попробовать бесплатно
+        </button>
+      </div>
+      <div class="flex justify-center">
+        <img src="https://images.unsplash.com/photo-1764601842167-ba701eed47f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMDNEJTIwZ3JhZGllbnQlMjBkaWdpdGFsJTIwbWFya2V0aW5nfGVufDF8fHx8MTc3MjM4MzcyM3ww&ixlib=rb-4.1.0&q=80&w=1080" alt="Digital Marketing" class="w-full h-auto rounded-3xl">
+      </div>
+    </div>
+  </section>
+
+  <!-- ПЛАТФОРМЫ (3D-КАРТОЧКИ) -->
+  <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto">
+    <h2 class="text-3xl md:text-4xl font-bold mb-8 md:mb-12 text-center">
+      Где ActZero будет продвигать ваш бизнес
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+      <!-- 1 -->
+      <div class="card-3d group">
+        <div class="card-3d-inner">
+          <div class="card-3d-front">
+            <div class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">1</div>
+            <div class="text-base md:text-lg font-medium">Поиск Яндекса</div>
+          </div>
+          <div class="card-3d-back">
+            <div class="w-full flex-1 flex items-center justify-center mb-4">
+              <video class="video-back" muted loop playsinline preload="none">
+                <source src="video/seld.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-white text-sm md:text-base text-center leading-relaxed">Показывайте рекламу миллионам пользователей, которые активно ищут товары и услуги в поиске Яндекса</p>
+          </div>
+        </div>
+      </div>
+      <!-- 2 -->
+      <div class="card-3d group">
+        <div class="card-3d-inner">
+          <div class="card-3d-front">
+            <div class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">2</div>
+            <div class="text-base md:text-lg font-medium">Галерея услуг</div>
+          </div>
+          <div class="card-3d-back">
+            <div class="w-full flex-1 flex items-center justify-center mb-4">
+              <video class="video-back" muted loop playsinline preload="none">
+                <source src="video/seld.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-white text-sm md:text-base text-center leading-relaxed">Привлекайте клиентов через специальную галерею услуг с удобными карточками</p>
+          </div>
+        </div>
+      </div>
+      <!-- 3 -->
+      <div class="card-3d group">
+        <div class="card-3d-inner">
+          <div class="card-3d-front">
+            <div class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">3</div>
+            <div class="text-base md:text-lg font-medium">Товарная галерея</div>
+          </div>
+          <div class="card-3d-back">
+            <div class="w-full flex-1 flex items-center justify-center mb-4">
+              <video class="video-back" muted loop playsinline preload="none">
+                <source src="video/seld.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-white text-sm md:text-base text-center leading-relaxed">Демонстрируйте свои товары с фото и ценами прямо в результатах поиска</p>
+          </div>
+        </div>
+      </div>
+      <!-- 4 -->
+      <div class="card-3d group">
+        <div class="card-3d-inner">
+          <div class="card-3d-front">
+            <div class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">4</div>
+            <div class="text-base md:text-lg font-medium">Яндекс Карты</div>
+          </div>
+          <div class="card-3d-back">
+            <div class="w-full flex-1 flex items-center justify-center mb-4">
+              <video class="video-back" muted loop playsinline preload="none">
+                <source src="video/seld.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-white text-sm md:text-base text-center leading-relaxed">Станьте видимыми для клиентов, которые ищут товары и услуги поблизости</p>
+          </div>
+        </div>
+      </div>
+      <!-- 5 -->
+      <div class="card-3d group">
+        <div class="card-3d-inner">
+          <div class="card-3d-front">
+            <div class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">5</div>
+            <div class="text-base md:text-lg font-medium">Рекламная сеть Яндекса</div>
+          </div>
+          <div class="card-3d-back">
+            <div class="w-full flex-1 flex items-center justify-center mb-4">
+              <video class="video-back" muted loop playsinline preload="none">
+                <source src="video/seld.mp4" type="video/mp4">
+              </video>
+            </div>
+            <p class="text-white text-sm md:text-base text-center leading-relaxed">Размещайте рекламу на тысячах партнёрских сайтов для максимального охвата</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 БЛОКОВ С ОПИСАНИЯМИ (FEATURE SHOWCASE) -->
+  <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto space-y-16 md:space-y-24">
+    <!-- 1. Поиск Яндекса -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+      <div class="rounded-3xl overflow-hidden order-2 md:order-1">
+        <img src="video/kaisa_1.png" alt="Search" class="w-full h-[300px] md:h-[400px] object-cover">
+      </div>
+      <div class="order-1 md:order-2">
+        <h3 class="text-2xl md:text-3xl font-bold mb-4">В поиске Яндекса</h3>
+        <p class="text-base md:text-lg text-gray-600">Ваши объявления появятся в результатах поиска Яндекса именно в тот момент, когда пользователи ищут похожие товары или услуги. Это самый эффективный способ привлечь заинтересованных клиентов.</p>
+      </div>
+    </div>
+    <!-- 2. Галерея услуг -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+      <div class="order-1">
+        <h3 class="text-2xl md:text-3xl font-bold mb-4">В Галерее услуг</h3>
+        <p class="text-base md:text-lg text-gray-600">Галерея услуг помогает пользователям быстро найти нужного специалиста или компанию. Ваша реклама будет показана тем, кто активно ищет услуги в вашей сфере.</p>
+      </div>
+      <div class="rounded-3xl overflow-hidden order-2">
+        <img src="video/kaisa_1.png" alt="Services" class="w-full h-[300px] md:h-[400px] object-cover">
+      </div>
+    </div>
+    <!-- 3. Товарная галерея -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+      <div class="rounded-3xl overflow-hidden order-2 md:order-1">
+        <img src="video/kaisa_1.png" alt="Products" class="w-full h-[300px] md:h-[400px] object-cover">
+      </div>
+      <div class="order-1 md:order-2">
+        <h3 class="text-2xl md:text-3xl font-bold mb-4">В Товарной галерее</h3>
+        <p class="text-base md:text-lg text-gray-600">Товарная галерея показывает ваши продукты с фото, ценами и характеристиками прямо в результатах поиска. Это привлекает внимание и повышает вероятность покупки.</p>
+      </div>
+    </div>
+    <!-- 4. Яндекс Карты -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+      <div class="order-1">
+        <h3 class="text-2xl md:text-3xl font-bold mb-4">В Яндекс Картах</h3>
+        <p class="text-base md:text-lg text-gray-600">Привлекайте клиентов, которые ищут товары и услуги поблизости. Ваши объявления появятся на картах с указанием адреса, времени работы и контактов.</p>
+      </div>
+      <div class="rounded-3xl overflow-hidden order-2">
+        <img src="video/photo_2025-10-24_22-10-38.jpg" alt="Maps" class="w-full h-[300px] md:h-[400px] object-cover">
+      </div>
+    </div>
+    <!-- 5. Рекламная сеть Яндекса -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+      <div class="rounded-3xl overflow-hidden order-2 md:order-1">
+        <img src="video/kaisa_1.png" alt="Network" class="w-full h-[300px] md:h-[400px] object-cover">
+      </div>
+      <div class="order-1 md:order-2">
+        <h3 class="text-2xl md:text-3xl font-bold mb-4">В Рекламной сети Яндекса</h3>
+        <p class="text-base md:text-lg text-gray-600">Охватите более широкую аудиторию на тысячах партнёрских сайтов. Баннеры и текстовые объявления привлекут внимание потенциальных клиентов в нужный момент.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- СТАТИСТИЧЕСКИЙ БАННЕР (СИНИЙ) -->
+  <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto">
+    <div class="bg-blue-600 rounded-3xl p-8 md:p-16 text-center">
+      <h2 class="text-2xl md:text-4xl font-bold text-white">В ActZero уже более 300 000 бизнесов, можно продвигать практически всё</h2>
+    </div>
+  </section>
+
+  <!-- КАРТОЧКИ УСЛУГ (4 ШТ.) -->
+  <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto">
+    <div class="text-center mb-8 md:mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">Продвигаться можно и без сайта</h2>
+      <p class="text-lg md:text-xl text-gray-600">Если нет сайта, продвигаться можно и без него, используйте для этого другие инструменты</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Лендинги -->
+      <div class="bg-white p-6 md:p-8 rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
+        <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center mb-6 text-3xl">🌐</div>
+        <h3 class="text-lg md:text-xl font-bold mb-3">Лендинги β</h3>
+        <p class="text-gray-600">Создадим для вас продающий лендинг — с помощью нейротехнологий ActZero</p>
+      </div>
+      <!-- Карточки товаров -->
+      <div class="bg-white p-6 md:p-8 rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
+        <div class="w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center mb-6 text-3xl">🛒</div>
+        <h3 class="text-lg md:text-xl font-bold mb-3">Карточки товаров</h3>
+        <p class="text-gray-600">Продвигайте отдельные товары с карточками на маркетплейсах и в Товарной галерее</p>
+      </div>
+      <!-- Мобильные приложения -->
+      <div class="bg-white p-6 md:p-8 rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
+        <div class="w-16 h-16 rounded-2xl bg-green-600 flex items-center justify-center mb-6 text-3xl">📱</div>
+        <h3 class="text-lg md:text-xl font-bold mb-3">Мобильные приложения</h3>
+        <p class="text-gray-600">Продвигайте iOS и Android-приложения в Поиске и Рекламной сети</p>
+      </div>
+      <!-- Телеграм-каналы -->
+      <div class="bg-white p-6 md:p-8 rounded-3xl shadow-lg hover:shadow-xl transition-shadow">
+        <div class="w-16 h-16 rounded-2xl bg-orange-600 flex items-center justify-center mb-6 text-3xl">📨</div>
+        <h3 class="text-lg md:text-xl font-bold mb-3">Телеграм-каналы</h3>
+        <p class="text-gray-600">Показывайте подходящую рекламу в публичных и закрытых каналах партнёров</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ФИОЛЕТОВЫЙ БАННЕР (ЦЕННОСТЬ) -->
+  <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto">
+    <div class="bg-purple-600 rounded-3xl p-8 md:p-16 text-center">
+      <h2 class="text-2xl md:text-4xl font-bold text-white leading-relaxed">Каждый рубль работает на вас. Вы можете платить за показы, клики или целевые действия — заявки или звонки</h2>
+    </div>
+  </section>
+
+  <!-- ВОЗМОЖНОСТИ (3 КОЛОНКИ) -->
+  <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto">
+    <div class="text-center mb-8 md:mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">Возможности ActZero</h2>
+      <p class="text-lg md:text-xl text-gray-600">В ActZero есть несколько возможностей продвижения, которые подходят для разных задач бизнеса</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-8 md:p-10 rounded-3xl">
+        <h3 class="text-xl md:text-2xl font-bold mb-4">Новичкам. Простой старт</h3>
+        <p class="text-gray-700 mb-4">Для тех, кто только начинает работу с рекламой. Интуитивный интерфейс и автоматическая настройка помогут быстро запустить первую кампанию без специальных знаний.</p>
+      </div>
+      <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-8 md:p-10 rounded-3xl">
+        <h3 class="text-xl md:text-2xl font-bold mb-4">Более опытным. Мастер кампаний</h3>
+        <p class="text-gray-700 mb-4">Более гибкий режим настройки для тех, кто хочет болше контроля. Создавайте кампании с детальной настройкой таргетинга и бюджетов.</p>
+      </div>
+      <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-8 md:p-10 rounded-3xl">
+        <h3 class="text-xl md:text-2xl font-bold mb-4">Специалистам. Инструменты ActZero Про</h3>
+        <p class="text-gray-700 mb-4">Помогают продвигать товары и услуги с максимальной эффективностью:</p>
+        <ul class="space-y-2 text-gray-700">
+          <li class="flex items-start"><span class="text-green-600 mr-2">➡️</span><span>Контекстный баннер</span></li>
+          <li class="flex items-start"><span class="text-green-600 mr-2">➡️</span><span>Охватные кампании</span></li>
+          <li class="flex items-start"><span class="text-green-600 mr-2">➡️</span><span>Единая перфоманс-кампания</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto">
+    <h2 class="text-3xl md:text-4xl font-bold mb-8 md:mb-12 text-center">Вопрос-ответ</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <button class="text-left p-4 md:p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between group">
+        <span class="text-base md:text-lg font-medium">С какого бюджета стоит начинать?</span>
+        <span class="text-gray-400 group-hover:text-gray-600 transition-colors ml-2">➡️</span>
+      </button>
+      <button class="text-left p-4 md:p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between group">
+        <span class="text-base md:text-lg font-medium">Сколько стоит клик?</span>
+        <span class="text-gray-400 group-hover:text-gray-600 transition-colors ml-2">➡️</span>
+      </button>
+      <button class="text-left p-4 md:p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between group">
+        <span class="text-base md:text-lg font-medium">Как быстро появятся результаты?</span>
+        <span class="text-gray-400 group-hover:text-gray-600 transition-colors ml-2">➡️</span>
+      </button>
+      <button class="text-left p-4 md:p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between group">
+        <span class="text-base md:text-lg font-medium">Нужен ли сайт для рекламы?</span>
+        <span class="text-gray-400 group-hover:text-gray-600 transition-colors ml-2">➡️</span>
+      </button>
+      <button class="text-left p-4 md:p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between group">
+        <span class="text-base md:text-lg font-medium">Как оплачивать рекламу?</span>
+        <span class="text-gray-400 group-hover:text-gray-600 transition-colors ml-2">➡️</span>
+      </button>
+      <button class="text-left p-4 md:p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between group">
+        <span class="text-base md:text-lg font-medium">Можно ли остановить кампанию?</span>
+        <span class="text-gray-400 group-hover:text-gray-600 transition-colors ml-2">➡️</span>
+      </button>
+      <button class="text-left p-4 md:p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between group">
+        <span class="text-base md:text-lg font-medium">Как измерять эффективность?</span>
+        <span class="text-gray-400 group-hover:text-gray-600 transition-colors ml-2">➡️</span>
+      </button>
+      <button class="text-left p-4 md:p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between group">
+        <span class="text-base md:text-lg font-medium">Есть ли техподдержка?</span>
+        <span class="text-gray-400 group-hover:text-gray-600 transition-colors ml-2">➡️</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ФУТЕР -->
+  <footer class="px-4 md:px-8 py-12 md:py-20 bg-gray-50">
+    <div class="max-w-[1440px] mx-auto">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 md:gap-0">
+        <div class="w-full md:w-auto">
+          <h3 class="text-xl md:text-2xl font-bold mb-4">Подпишитесь на новости</h3>
+          <p class="text-gray-600 mb-6">Узнавайте первыми о новых возможностях и акциях</p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <input type="email" placeholder="Ваш email" class="px-6 py-3 rounded-full border border-gray-300 w-full sm:w-80 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button class="px-8 py-3 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors whitespace-nowrap">Подписаться</button>
+          </div>
+        </div>
+        <div>
+          <button class="px-8 py-3 rounded-full bg-black text-white font-medium hover:bg-gray-800 transition-colors w-full md:w-auto">Скачать приложение</button>
+        </div>
+      </div>
+      <div class="mt-12 md:mt-16 pt-6 md:pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between gap-4 text-sm text-gray-600">
+        <div>© 2026 ActZero</div>
+        <div class="flex flex-col sm:flex-row gap-4 md:gap-8">
+          <a href="#" class="hover:text-black">Условия использования</a>
+          <a href="#" class="hover:text-black">Политика конфиденциальности</a>
+          <a href="#" class="hover:text-black">Поддержка</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Подключение внешнего JS -->
+  <script src="js/script.js"></script>
+</body>
+</html>
