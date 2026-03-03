@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ActZero — Личный кабинет</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Manrope', sans-serif; }
+
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 260px;
+      min-height: 100vh;
+      background: #fff;
+      border-right: 1px solid #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 40;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      border-radius: 14px;
+      color: #6b7280;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.18s ease;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .sidebar-link:hover { background: #f5f7ff; color: #1d4ed8; }
+    .sidebar-link.active { background: #eff6ff; color: #2563eb; font-weight: 700; }
+    .sidebar-link .icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      background: #f3f4f6;
+      transition: background 0.18s;
+      flex-shrink: 0;
+    }
+    .sidebar-link.active .icon { background: #dbeafe; }
+    .sidebar-link:hover .icon { background: #dbeafe; }
+
+    /* ===== Main ===== */
+    .main-content {
+      margin-left: 260px;
+      min-height: 100vh;
+      background: #f8fafc;
+    }
+
+    /* ===== Stat card ===== */
+    .stat-card {
+      background: #fff;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.09); transform: translateY(-2px); }
+
+    /* ===== Chart bar ===== */
+    .bar-wrap { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+    .bar {
+      flex: 1; border-radius: 6px 6px 0 0;
+      background: #dbeafe;
+      transition: background 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+    .bar:hover { background: #2563eb; }
+    .bar.active-bar { background: #2563eb; }
+
+    /* ===== Badge ===== */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .badge-green  { background: #dcfce7; color: #15803d; }
+    .badge-yellow { background: #fef9c3; color: #a16207; }
+    .badge-red    { background: #fee2e2; color: #b91c1c; }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+
+    /* ===== Campaign row ===== */
+    .campaign-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 80px;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid #f3f4f6;
+      transition: background 0.15s;
+      gap: 12px;
+    }
+    .campaign-row:hover { background: #f8fafc; }
+    .campaign-row:last-child { border-bottom: none; }
+
+    /* ===== Toggle ===== */
+    .toggle {
+      width: 40px; height: 22px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle.on { background: #2563eb; }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      transition: left 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle.on::after { left: 21px; }
+
+    /* ===== Mobile sidebar overlay ===== */
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 39;
+      backdrop-filter: blur(2px);
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .main-content { margin-left: 0; }
+    }
+
+    /* ===== Page fade-in ===== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.4s ease both; }
+    .fade-up-1 { animation-delay: 0.05s; }
+    .fade-up-2 { animation-delay: 0.12s; }
+    .fade-up-3 { animation-delay: 0.19s; }
+    .fade-up-4 { animation-delay: 0.26s; }
+    .fade-up-5 { animation-delay: 0.33s; }
+
+    /* ===== Balance block ===== */
+    .balance-card {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%);
+      border-radius: 1.5rem;
+      padding: 1.75rem;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+    }
+    .balance-card::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; right: 30px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+  <!-- Logo -->
+  <div class="px-6 py-5 border-b border-gray-100">
+    <div class="text-xl font-bold tracking-tight">ActZero</div>
+    <div class="text-xs text-gray-400 mt-0.5">Рекламный кабинет</div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+    <a class="sidebar-link active" onclick="setPage('dashboard')">
+      <span class="icon">📊</span> Обзор
+    </a>
+    <a class="sidebar-link" onclick="setPage('campaigns')">
+      <span class="icon">🚀</span> Кампании
+    </a>
+    <a class="sidebar-link" onclick="setPage('stats')">
+      <span class="icon">📈</span> Статистика
+    </a>
+    <a class="sidebar-link" onclick="setPage('budget')">
+      <span class="icon">💳</span> Бюджет и оплата
+    </a>
+    <a class="sidebar-link" onclick="setPage('audiences')">
+      <span class="icon">🎯</span> Аудитории
+    </a>
+    <a class="sidebar-link" onclick="setPage('creatives')">
+      <span class="icon">🖼️</span> Креативы
+    </a>
+
+    <div class="pt-3 pb-1 px-2 text-xs text-gray-400 font-semibold uppercase tracking-wider">Настройки</div>
+    <a class="sidebar-link" onclick="setPage('profile')">
+      <span class="icon">👤</span> Профиль
+    </a>
+    <a class="sidebar-link" onclick="setPage('notifications')">
+      <span class="icon">🔔</span> Уведомления
+    </a>
+    <a class="sidebar-link" onclick="setPage('help')">
+      <span class="icon">💬</span> Поддержка
+    </a>
+  </nav>
+
+  <!-- User -->
+  <div class="px-4 py-4 border-t border-gray-100 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">ИИ</div>
+    <div class="flex-1 min-w-0">
+      <div class="text-sm font-semibold truncate">Иван Иванов</div>
+      <div class="text-xs text-gray-400 truncate">ivan@example.com</div>
+    </div>
+    <button class="text-gray-400 hover:text-gray-700 text-lg" title="Выйти" onclick="window.location='index.html'">↩</button>
+  </div>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main-content">
+
+  <!-- Top bar -->
+  <header class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+    <div class="flex items-center gap-3">
+      <button class="md:hidden p-2 rounded-xl hover:bg-gray-100 text-xl" onclick="openSidebar()">☰</button>
+      <div>
+        <h1 class="text-lg font-bold" id="page-title">Обзор</h1>
+        <div class="text-xs text-gray-400" id="page-subtitle">Добро пожаловать, Иван 👋</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Balance pill -->
+      <div class="hidden sm:flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
+        <span>💰</span> 12 400 ₽
+      </div>
+      <!-- New campaign -->
+      <button onclick="setPage('campaigns')" class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-2">
+        <span class="text-base leading-none">+</span> Кампания
+      </button>
+      <!-- Notifications -->
+      <button class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-xl">
+        🔔
+        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== PAGE: DASHBOARD ===== -->
+  <div id="page-dashboard" class="p-6 space-y-6">
+
+    <!-- Stats grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Показы -->
+      <div class="stat-card fade-up fade-up-1">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-xl">👁</div>
+          <span class="badge badge-green">+12%</span>
+        </div>
+        <div class="text-2xl font-bold mt-2">84 320</div>
+        <div class="text-sm text-gray-400 mt-0.5">Показы</div>
+        <div class="bar-wrap mt-3">
+          <div class="bar" style="height:40%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:45%"></div>
+          <div class="bar" style="height:70%"></div>
+          <div class="bar" style="height:60%"></div>
+          <div class="bar active-bar" style="height:85%"></div>
+          <div class="bar" style="height:75%"></div>
+        </div>
+      </div>
+      <!-- Клики -->
+      <div class="stat-card fade-up fade-up-2">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-xl">🖱️</div>
+          <span class="badge badge-green">+8%</span>
+        </div>
+        <div class="text-2xl font-bold mt-2">3 412</div>
+        <div class="text-sm text-gray-400 mt-0.5">Клики</div>
+        <div class="bar-wrap mt-3">
+          <div class="bar" style="height:35%"></div>
+          <div class="bar" style="height:50%"></div>
+          <div class="bar" style="height:40%"></div>
+          <div class="bar" style="height:65%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar active-bar" style="height:80%"></div>
+          <div class="bar" style="height:70%"></div>
+        </div>
+      </div>
+      <!-- CTR -->
+      <div class="stat-card fade-up fade-up-3">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-xl">📊</div>
+          <span class="badge badge-yellow">±0%</span>
+        </div>
+        <div class="text-2xl font-bold mt-2">4.05%</div>
+        <div class="text-sm text-gray-400 mt-0.5">CTR</div>
+        <div class="bar-wrap mt-3">
+          <div class="bar" style="height:50%"></div>
+          <div class="bar" style="height:45%"></div>
+          <div class="bar" style="height:60%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:65%"></div>
+          <div class="bar active-bar" style="height:60%"></div>
+          <div class="bar" style="height:58%"></div>
+        </div>
+      </div>
+      <!-- Расход -->
+      <div class="stat-card fade-up fade-up-4">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-xl">💸</div>
+          <span class="badge badge-red">-3%</span>
+        </div>
+        <div class="text-2xl font-bold mt-2">7 600 ₽</div>
+        <div class="text-sm text-gray-400 mt-0.5">Расход за 7 дней</div>
+        <div class="bar-wrap mt-3">
+          <div class="bar" style="height:60%"></div>
+          <div class="bar" style="height:75%"></div>
+          <div class="bar" style="height:50%"></div>
+          <div class="bar" style="height:80%"></div>
+          <div class="bar" style="height:65%"></div>
+          <div class="bar active-bar" style="height:55%"></div>
+          <div class="bar" style="height:70%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Balance + Quick actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 fade-up fade-up-3">
+      <!-- Balance -->
+      <div class="balance-card">
+        <div class="relative z-10">
+          <div class="text-sm text-blue-200 font-medium mb-1">Баланс счёта</div>
+          <div class="text-3xl font-bold mb-4">12 400 ₽</div>
+          <div class="flex gap-2">
+            <button class="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-semibold hover:bg-blue-50">Пополнить</button>
+            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">История</button>
+          </div>
+          <div class="mt-4 pt-4 border-t border-white/20 flex items-center gap-2 text-blue-100 text-xs">
+            <span>⚡</span> Прогноза хватит на ~8 дней
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="md:col-span-2 bg-white rounded-3xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div class="font-bold">Активные кампании</div>
+          <a onclick="setPage('campaigns')" class="text-blue-600 text-sm font-medium cursor-pointer hover:underline">Все →</a>
+        </div>
+        <div class="space-y-3">
+          <!-- campaign item -->
+          <div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer">
+            <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center text-lg flex-shrink-0">🔍</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold truncate">Поиск — Главная</div>
+              <div class="text-xs text-gray-400">1 240 кликов · 28 конверсий</div>
+            </div>
+            <span class="badge badge-green">Активна</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer">
+            <div class="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center text-lg flex-shrink-0">🗺️</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold truncate">Яндекс Карты — Офис</div>
+              <div class="text-xs text-gray-400">820 кликов · 14 конверсий</div>
+            </div>
+            <span class="badge badge-green">Активна</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer">
+            <div class="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center text-lg flex-shrink-0">📦</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold truncate">Товарная галерея — Зима</div>
+              <div class="text-xs text-gray-400">320 кликов · 5 конверсий</div>
+            </div>
+            <span class="badge badge-yellow">На паузе</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="bg-white rounded-3xl p-5 shadow-sm fade-up fade-up-5">
+      <div class="font-bold mb-4">💡 Рекомендации ActZero</div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="bg-blue-50 rounded-2xl p-4 cursor-pointer hover:bg-blue-100 transition-colors">
+          <div class="text-2xl mb-2">🎯</div>
+          <div class="text-sm font-semibold mb-1">Расширьте аудиторию</div>
+          <div class="text-xs text-gray-500">Похожие пользователи увеличат охват на ~30%</div>
+        </div>
+        <div class="bg-green-50 rounded-2xl p-4 cursor-pointer hover:bg-green-100 transition-colors">
+          <div class="text-2xl mb-2">💰</div>
+          <div class="text-sm font-semibold mb-1">Пополните баланс</div>
+          <div class="text-xs text-gray-500">Осталось на 8 дней — пополните заранее</div>
+        </div>
+        <div class="bg-purple-50 rounded-2xl p-4 cursor-pointer hover:bg-purple-100 transition-colors">
+          <div class="text-2xl mb-2">🖼️</div>
+          <div class="text-sm font-semibold mb-1">Добавьте креативы</div>
+          <div class="text-xs text-gray-500">A/B тест повысит CTR в среднем на 18%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: CAMPAIGNS ===== -->
+  <div id="page-campaigns" class="p-6 hidden">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-xl font-bold">Кампании</h2>
+        <p class="text-sm text-gray-400">Управляйте всеми рекламными кампаниями</p>
+      </div>
+      <button class="px-5 py-2.5 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700 flex items-center gap-2">
+        <span>+</span> Создать кампанию
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex gap-2 mb-4 flex-wrap">
+      <button class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium">Все</button>
+      <button class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm font-medium hover:bg-gray-100 border border-gray-200">Активные</button>
+      <button class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm font-medium hover:bg-gray-100 border border-gray-200">На паузе</button>
+      <button class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm font-medium hover:bg-gray-100 border border-gray-200">Завершённые</button>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
+      <!-- Header -->
+      <div class="campaign-row bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+        <div>Кампания</div>
+        <div>Бюджет / день</div>
+        <div>Клики · CTR</div>
+        <div>Расход</div>
+        <div class="text-center">Статус</div>
+      </div>
+      <!-- Rows -->
+      <div class="campaign-row">
+        <div>
+          <div class="font-semibold text-sm">Поиск — Главная</div>
+          <div class="text-xs text-gray-400">Поиск Яндекса · CPC</div>
+        </div>
+        <div class="text-sm font-medium">1 000 ₽</div>
+        <div class="text-sm">1 240 · <span class="text-green-600 font-semibold">4.2%</span></div>
+        <div class="text-sm font-medium">4 320 ₽</div>
+        <div class="flex justify-center"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="campaign-row">
+        <div>
+          <div class="font-semibold text-sm">Яндекс Карты — Офис</div>
+          <div class="text-xs text-gray-400">Карты · CPM</div>
+        </div>
+        <div class="text-sm font-medium">500 ₽</div>
+        <div class="text-sm">820 · <span class="text-green-600 font-semibold">3.8%</span></div>
+        <div class="text-sm font-medium">1 980 ₽</div>
+        <div class="flex justify-center"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="campaign-row">
+        <div>
+          <div class="font-semibold text-sm">Товарная галерея — Зима</div>
+          <div class="text-xs text-gray-400">Товарная галерея · CPC</div>
+        </div>
+        <div class="text-sm font-medium">300 ₽</div>
+        <div class="text-sm">320 · <span class="text-yellow-600 font-semibold">2.1%</span></div>
+        <div class="text-sm font-medium">960 ₽</div>
+        <div class="flex justify-center"><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="campaign-row">
+        <div>
+          <div class="font-semibold text-sm">РСЯ — Ретаргетинг</div>
+          <div class="text-xs text-gray-400">Рекламная сеть · CPM</div>
+        </div>
+        <div class="text-sm font-medium">700 ₽</div>
+        <div class="text-sm">530 · <span class="text-green-600 font-semibold">5.1%</span></div>
+        <div class="text-sm font-medium">2 100 ₽</div>
+        <div class="flex justify-center"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: BUDGET ===== -->
+  <div id="page-budget" class="p-6 hidden">
+    <h2 class="text-xl font-bold mb-6">Бюджет и оплата</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Balance card -->
+      <div class="balance-card">
+        <div class="relative z-10">
+          <div class="text-sm text-blue-200 mb-1">Текущий баланс</div>
+          <div class="text-4xl font-bold mb-5">12 400 ₽</div>
+          <div class="text-sm text-blue-200 mb-3">Пополнить счёт</div>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">1 000 ₽</button>
+            <button class="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-semibold">5 000 ₽</button>
+            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">10 000 ₽</button>
+            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">Другая</button>
+          </div>
+          <button class="w-full py-3 bg-white text-blue-700 rounded-2xl font-bold hover:bg-blue-50 transition-colors">Пополнить</button>
+        </div>
+      </div>
+      <!-- History -->
+      <div class="bg-white rounded-3xl shadow-sm p-5">
+        <div class="font-bold mb-4">История транзакций</div>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3 py-2 border-b border-gray-50">
+            <div class="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-lg flex-shrink-0">⬆️</div>
+            <div class="flex-1"><div class="text-sm font-semibold">Пополнение</div><div class="text-xs text-gray-400">28 фев, 14:32</div></div>
+            <div class="text-green-600 font-bold text-sm">+5 000 ₽</div>
+          </div>
+          <div class="flex items-center gap-3 py-2 border-b border-gray-50">
+            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-lg flex-shrink-0">📢</div>
+            <div class="flex-1"><div class="text-sm font-semibold">Поиск — Главная</div><div class="text-xs text-gray-400">27 фев, 00:00</div></div>
+            <div class="text-red-500 font-bold text-sm">-1 000 ₽</div>
+          </div>
+          <div class="flex items-center gap-3 py-2 border-b border-gray-50">
+            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-lg flex-shrink-0">📢</div>
+            <div class="flex-1"><div class="text-sm font-semibold">Карты — Офис</div><div class="text-xs text-gray-400">27 фев, 00:00</div></div>
+            <div class="text-red-500 font-bold text-sm">-500 ₽</div>
+          </div>
+          <div class="flex items-center gap-3 py-2">
+            <div class="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-lg flex-shrink-0">⬆️</div>
+            <div class="flex-1"><div class="text-sm font-semibold">Пополнение</div><div class="text-xs text-gray-400">20 фев, 10:15</div></div>
+            <div class="text-green-600 font-bold text-sm">+10 000 ₽</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: PROFILE ===== -->
+  <div id="page-profile" class="p-6 hidden">
+    <h2 class="text-xl font-bold mb-6">Профиль</h2>
+    <div class="bg-white rounded-3xl shadow-sm p-6 max-w-2xl space-y-5">
+      <!-- Avatar -->
+      <div class="flex items-center gap-5">
+        <div class="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">ИИ</div>
+        <div>
+          <div class="font-bold text-lg">Иван Иванов</div>
+          <div class="text-gray-400 text-sm">ivan@example.com</div>
+          <button class="mt-2 text-sm text-blue-600 hover:underline">Изменить фото</button>
+        </div>
+      </div>
+      <hr class="border-gray-100">
+      <!-- Fields -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1.5">Имя</label>
+          <input value="Иван" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1.5">Фамилия</label>
+          <input value="Иванов" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1.5">Email</label>
+          <input value="ivan@example.com" type="email" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1.5">Телефон</label>
+          <input value="+7 (999) 123-45-67" type="tel" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-gray-600 mb-1.5">Название компании</label>
+          <input value="ООО Ромашка" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+      <button class="px-6 py-3 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700">Сохранить изменения</button>
+    </div>
+  </div>
+
+  <!-- ===== PLACEHOLDER PAGES ===== -->
+  <div id="page-stats" class="p-6 hidden">
+    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
+      <div class="text-center">
+        <div class="text-5xl mb-4">📈</div>
+        <div class="font-bold text-xl mb-2">Статистика</div>
+        <div class="text-gray-400 text-sm">Раздел в разработке</div>
+      </div>
+    </div>
+  </div>
+  <div id="page-audiences" class="p-6 hidden">
+    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
+      <div class="text-center">
+        <div class="text-5xl mb-4">🎯</div>
+        <div class="font-bold text-xl mb-2">Аудитории</div>
+        <div class="text-gray-400 text-sm">Раздел в разработке</div>
+      </div>
+    </div>
+  </div>
+  <div id="page-creatives" class="p-6 hidden">
+    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
+      <div class="text-center">
+        <div class="text-5xl mb-4">🖼️</div>
+        <div class="font-bold text-xl mb-2">Креативы</div>
+        <div class="text-gray-400 text-sm">Раздел в разработке</div>
+      </div>
+    </div>
+  </div>
+  <div id="page-notifications" class="p-6 hidden">
+    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
+      <div class="text-center">
+        <div class="text-5xl mb-4">🔔</div>
+        <div class="font-bold text-xl mb-2">Уведомления</div>
+        <div class="text-gray-400 text-sm">Раздел в разработке</div>
+      </div>
+    </div>
+  </div>
+  <div id="page-help" class="p-6 hidden">
+    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
+      <div class="text-center">
+        <div class="text-5xl mb-4">💬</div>
+        <div class="font-bold text-xl mb-2">Поддержка</div>
+        <div class="text-gray-400 text-sm">Раздел в разработке</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<script>
+  const pages = {
+    dashboard:     { title: 'Обзор',           sub: 'Добро пожаловать, Иван 👋' },
+    campaigns:     { title: 'Кампании',         sub: 'Управление рекламой' },
+    stats:         { title: 'Статистика',       sub: 'Аналитика и отчёты' },
+    budget:        { title: 'Бюджет и оплата',  sub: 'Управление финансами' },
+    audiences:     { title: 'Аудитории',        sub: 'Настройка таргетинга' },
+    creatives:     { title: 'Креативы',         sub: 'Баннеры и объявления' },
+    profile:       { title: 'Профиль',          sub: 'Настройки аккаунта' },
+    notifications: { title: 'Уведомления',      sub: 'Ваши оповещения' },
+    help:          { title: 'Поддержка',        sub: 'Помощь и контакты' },
+  };
+
+  function setPage(id) {
+    // Hide all pages
+    document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('hidden'));
+    // Show target
+    document.getElementById('page-' + id).classList.remove('hidden');
+    // Update header
+    document.getElementById('page-title').textContent = pages[id].title;
+    document.getElementById('page-subtitle').textContent = pages[id].sub;
+    // Update sidebar active
+    document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    // Close mobile sidebar
+    closeSidebar();
+  }
+
+  function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('overlay').classList.add('open');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('open');
+  }
+</script>
+
+</body>
+</html>
