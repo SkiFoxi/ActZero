@@ -13,17 +13,18 @@
 
   <!-- ШАПКА -->
   <header class="px-4 md:px-8 py-4 flex items-center justify-between max-w-[1440px] mx-auto">
-    <div class="text-xl md:text-2xl font-bold">ActZero</div>
-    <nav class="hidden md:flex items-center gap-8">
-      <a href="#" class="text-gray-700 hover:text-black">Частным лицам</a>
-      <a href="#" class="text-gray-700 hover:text-black">Бизнесу</a>
-      <a href="#" class="text-gray-700 hover:text-black">Веб-мастерам</a>
-      <button class="px-6 py-3 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
-        Перейти в кабинет
-      </button>
-    </nav>
-    <button class="md:hidden p-2 text-2xl">☰</button>
-  </header>
+  <div class="text-xl md:text-2xl font-bold">ActZero</div>
+  <nav class="hidden md:flex items-center gap-8">
+    <a href="index.html"      class="nav-link text-gray-700 hover:text-black">О нас</a>
+    <a href="individuals.html" class="nav-link text-gray-700 hover:text-black">Частным лицам</a>
+    <a href="business.html"   class="nav-link text-gray-700 hover:text-black">Бизнесу</a>
+    <a href="webmasters.html" class="nav-link text-gray-700 hover:text-black">Веб-мастерам</a>
+    <button onclick="openModal()" class="px-6 py-3 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+      Перейти в кабинет
+    </button>
+  </nav>
+  <button class="md:hidden p-2 text-2xl">☰</button>
+</header>
 
   <!-- ГЕРОЙ -->
   <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto">
@@ -59,11 +60,9 @@
             <div class="text-base md:text-lg font-medium">Поиск Яндекса</div>
           </div>
           <div class="card-3d-back">
-            <div class="w-full flex-1 flex items-center justify-center mb-4">
-              <video class="video-back" muted loop playsinline preload="none">
+            <div class="video-container"><video class="video-back" muted loop playsinline preload="none">
                 <source src="video/seld.mp4" type="video/mp4">
-              </video>
-            </div>
+              </video></div>
             <p class="text-white text-sm md:text-base text-center leading-relaxed">Показывайте рекламу миллионам пользователей, которые активно ищут товары и услуги в поиске Яндекса</p>
           </div>
         </div>
@@ -76,11 +75,9 @@
             <div class="text-base md:text-lg font-medium">Галерея услуг</div>
           </div>
           <div class="card-3d-back">
-            <div class="w-full flex-1 flex items-center justify-center mb-4">
-              <video class="video-back" muted loop playsinline preload="none">
+            <div class="video-container"><video class="video-back" muted loop playsinline preload="none">
                 <source src="video/seld.mp4" type="video/mp4">
-              </video>
-            </div>
+              </video></div>
             <p class="text-white text-sm md:text-base text-center leading-relaxed">Привлекайте клиентов через специальную галерею услуг с удобными карточками</p>
           </div>
         </div>
@@ -93,11 +90,9 @@
             <div class="text-base md:text-lg font-medium">Товарная галерея</div>
           </div>
           <div class="card-3d-back">
-            <div class="w-full flex-1 flex items-center justify-center mb-4">
-              <video class="video-back" muted loop playsinline preload="none">
+            <div class="video-container"><video class="video-back" muted loop playsinline preload="none">
                 <source src="video/seld.mp4" type="video/mp4">
-              </video>
-            </div>
+              </video></div>
             <p class="text-white text-sm md:text-base text-center leading-relaxed">Демонстрируйте свои товары с фото и ценами прямо в результатах поиска</p>
           </div>
         </div>
@@ -110,11 +105,9 @@
             <div class="text-base md:text-lg font-medium">Яндекс Карты</div>
           </div>
           <div class="card-3d-back">
-            <div class="w-full flex-1 flex items-center justify-center mb-4">
-              <video class="video-back" muted loop playsinline preload="none">
+            <div class="video-container"><video class="video-back" muted loop playsinline preload="none">
                 <source src="video/seld.mp4" type="video/mp4">
-              </video>
-            </div>
+              </video></div>
             <p class="text-white text-sm md:text-base text-center leading-relaxed">Станьте видимыми для клиентов, которые ищут товары и услуги поблизости</p>
           </div>
         </div>
@@ -127,11 +120,9 @@
             <div class="text-base md:text-lg font-medium">Рекламная сеть Яндекса</div>
           </div>
           <div class="card-3d-back">
-            <div class="w-full flex-1 flex items-center justify-center mb-4">
-              <video class="video-back" muted loop playsinline preload="none">
+            <div class="video-container"><video class="video-back" muted loop playsinline preload="none">
                 <source src="video/seld.mp4" type="video/mp4">
-              </video>
-            </div>
+              </video></div>
             <p class="text-white text-sm md:text-base text-center leading-relaxed">Размещайте рекламу на тысячах партнёрских сайтов для максимального охвата</p>
           </div>
         </div>

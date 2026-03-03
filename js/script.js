@@ -1,18 +1,40 @@
-// Управление видео в 3D-карточках: запуск при наведении, остановка при уходе
-document.querySelectorAll('.group').forEach(card => {
+// ===== 3D карточки: hover (десктоп) + touch (мобильный) =====
+document.querySelectorAll('.card-3d').forEach(card => {
   const video = card.querySelector('video');
-  if (!video) return;
+  const inner = card.querySelector('.card-3d-inner');
+  if (!video || !inner) return;
 
+  video.load(); // принудительно начать загрузку (preload="none" иначе блокирует)
+
+  // --- Десктоп: hover ---
   card.addEventListener('mouseenter', () => {
-    // Пытаемся воспроизвести видео (может быть заблокировано браузером)
-    video.play().catch(e => {
-      // Игнорируем ошибки автозапуска (пользователь должен сначала взаимодействовать со страницей)
-      console.log('Видео не может быть запущено автоматически:', e);
-    });
+    video.play().catch(() => {});
   });
-
   card.addEventListener('mouseleave', () => {
     video.pause();
-    video.currentTime = 0; // сбрасываем на начало
+    video.currentTime = 0;
   });
+
+  // --- Мобильный: tap = flip + play, повторный tap = flip назад + stop ---
+  let flipped = false;
+  card.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    flipped = !flipped;
+    inner.style.transform = flipped ? 'rotateY(180deg)' : '';
+    if (flipped) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+      video.currentTime = 0;
+    }
+  }, { passive: false });
 });
+
+// ===== Активная ссылка в навигации =====
+(function () {
+  const current = location.pathname.split('/').pop() || 'index.html';
+  document.querySelectorAll('.nav-link').forEach(link => {
+    const page = link.getAttribute('href').split('/').pop();
+    if (page === current) link.classList.add('active');
+  });
+})();

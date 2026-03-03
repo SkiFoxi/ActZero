@@ -1,11 +1,14 @@
 /* ===== 3D карточки ===== */
 .card-3d {
-  height: 300px; /* md: 350px */
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  height: auto;
   perspective: 1000px;
 }
 
 @media (min-width: 768px) {
   .card-3d {
+    aspect-ratio: unset;
     height: 350px;
   }
 }
@@ -18,8 +21,11 @@
   transform-style: preserve-3d;
 }
 
-.group:hover .card-3d-inner {
-  transform: rotateY(180deg);
+/* Десктоп: flip по hover */
+@media (hover: hover) {
+  .group:hover .card-3d-inner {
+    transform: rotateY(180deg);
+  }
 }
 
 .card-3d-front,
@@ -48,11 +54,24 @@
   justify-content: space-between;
 }
 
+/* Контейнер видео — резиновый, занимает всё свободное место */
+.video-container {
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
 .video-back {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 1rem;
+  display: block;
 }
 
 .sedlarka {
@@ -60,25 +79,37 @@
   height: 600px;
 }
 
-/* ===== Дополнительные стили для видео (плавность) ===== */
 video {
-  pointer-events: none; /* чтобы видео не перехватывало hover */
+  pointer-events: none;
 }
 
-/* ===== Адаптивные корректировки для иконок-эмодзи ===== */
 .bg-blue-600, .bg-purple-600, .bg-green-600, .bg-orange-600 {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem; /* для эмодзи */
+  font-size: 2rem;
 }
 
-/* ===== Кнопки и ссылки (плавные переходы) ===== */
 button, a {
   transition: all 0.2s ease;
 }
 
-/* ===== Стили для футера (подписка) ===== */
+.nav-link.active {
+  color: #000;
+  font-weight: 600;
+  position: relative;
+}
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #2563eb;
+  border-radius: 999px;
+}
+
 input:focus {
   outline: none;
   ring: 2px solid #3b82f6;
