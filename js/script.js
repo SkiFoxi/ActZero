@@ -30,14 +30,38 @@ document.querySelectorAll('.card-3d').forEach(card => {
   }, { passive: false });
 });
 
-// ===== Активная ссылка в навигации =====
-(function () {
-  const current = location.pathname.split('/').pop() || 'index.html';
+// ===== Активная ссылка в навигации (надёжное сравнение путей) =====
+document.addEventListener('DOMContentLoaded', function() {
+  // Текущий путь, например: "/", "/index.html", "/htmllist/individuals.html"
+  let currentPath = location.pathname;
+
+  // Если путь заканчивается на "/" — добавляем index.html
+  if (currentPath.endsWith('/')) {
+    currentPath += 'index.html';
+  }
+
+  // Перебираем все ссылки навигации
   document.querySelectorAll('.nav-link').forEach(link => {
-    const page = link.getAttribute('href').split('/').pop();
-    if (page === current) link.classList.add('active');
+    const href = link.getAttribute('href');
+
+    // Работаем только с абсолютными ссылками (начинаются с /)
+    if (href.startsWith('/')) {
+      // Приводим ссылку к тому же формату, что и currentPath
+      let linkPath = href;
+      // Если ссылка заканчивается на "/", тоже добавляем index.html (хотя у нас таких нет)
+      if (linkPath.endsWith('/')) {
+        linkPath += 'index.html';
+      }
+
+      // Сравниваем полные пути
+      if (currentPath === linkPath) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active'); // убираем активный класс у других
+      }
+    }
   });
-})();
+});
 
 // ===== Модальное окно регистрации (только если есть на странице) =====
 if (document.getElementById('registerModal')) {
