@@ -13,19 +13,19 @@
 
   <!-- ШАПКА -->
   <header class="px-4 md:px-8 py-4 flex items-center justify-between max-w-[1440px] mx-auto">
-  <div class="text-xl md:text-2xl font-bold">ActZero</div>
-  <nav class="hidden md:flex items-center gap-8">
-    <a href="index.html"      class="nav-link text-gray-700 hover:text-black">О нас</a>
-    <a href="individuals.html" class="nav-link text-gray-700 hover:text-black">Частным лицам</a>
-    <a href="business.html"   class="nav-link text-gray-700 hover:text-black">Бизнесу</a>
-    <a href="webmasters.html" class="nav-link text-gray-700 hover:text-black">Веб-мастерам</a>
-    <a href="lkabinet.html"      class="nav-link text-gray-700 hover:text-black">Личный кабинет</a>
-    <button onclick="openModal()" class="px-6 py-3 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
-      Перейти в кабинет
-    </button>
-  </nav>
-  <button class="md:hidden p-2 text-2xl">☰</button>
-</header>
+    <div class="text-xl md:text-2xl font-bold">ActZero</div>
+    <nav class="hidden md:flex items-center gap-8">
+      <a href="/index.html"                class="nav-link text-gray-700 hover:text-black">О нас</a>
+      <a href="/htmllist/individuals.html" class="nav-link text-gray-700 hover:text-black">Частным лицам</a>
+      <a href="/htmllist/business.html"    class="nav-link text-gray-700 hover:text-black">Бизнесу</a>
+      <a href="/htmllist/webmasters.html"  class="nav-link text-gray-700 hover:text-black">Веб-мастерам</a>
+      <a href="/htmllist/lkabinet.html"    class="nav-link text-gray-700 hover:text-black">Личный кабинет</a>
+      <button onclick="openModal()" class="px-6 py-3 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+        Перейти в кабинет
+      </button>
+    </nav>
+    <button class="md:hidden p-2 text-2xl">☰</button>
+  </header>
 
   <!-- ГЕРОЙ -->
   <section class="px-4 md:px-8 py-12 md:py-20 max-w-[1440px] mx-auto">
@@ -422,101 +422,8 @@
     </div>
   </div>
 
-  <style>
-    @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.93) translateY(20px); }
-      to   { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    .animate-modal { animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-    #registerModal.flex { display: flex; }
-  </style>
-
   <!-- Подключение внешнего JS -->
   <script src="js/script.js"></script>
 
-  <script>
-    // ===== Modal open/close =====
-    const modal = document.getElementById('registerModal');
-    const backdrop = document.getElementById('modalBackdrop');
-    const closeBtn = document.getElementById('closeModal');
-
-    function openModal() {
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeModal() {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      document.body.style.overflow = '';
-    }
-
-    // Open on header button & hero button
-    document.querySelectorAll('button').forEach(btn => {
-      if (btn.textContent.trim() === 'Перейти в кабинет' || btn.textContent.trim() === 'Попробовать бесплатно') {
-        btn.addEventListener('click', openModal);
-      }
-    });
-
-    backdrop.addEventListener('click', closeModal);
-    closeBtn.addEventListener('click', closeModal);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-    // ===== Password toggle =====
-    const pwdInput = document.getElementById('regPassword');
-    document.getElementById('togglePassword').addEventListener('click', () => {
-      pwdInput.type = pwdInput.type === 'password' ? 'text' : 'password';
-    });
-
-    // ===== Password strength =====
-    const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3'), document.getElementById('bar4')];
-    const strengthLabel = document.getElementById('strengthLabel');
-    const levels = [
-      { color: 'bg-red-400', label: 'Слабый' },
-      { color: 'bg-orange-400', label: 'Средний' },
-      { color: 'bg-yellow-400', label: 'Хороший' },
-      { color: 'bg-green-500', label: 'Отличный' }
-    ];
-
-    pwdInput.addEventListener('input', () => {
-      const v = pwdInput.value;
-      let score = 0;
-      if (v.length >= 8) score++;
-      if (/[A-Z]/.test(v)) score++;
-      if (/[0-9]/.test(v)) score++;
-      if (/[^A-Za-z0-9]/.test(v)) score++;
-
-      bars.forEach((bar, i) => {
-        bar.className = 'h-1 flex-1 rounded-full transition-all duration-300 ';
-        bar.className += (i < score && score > 0) ? levels[score - 1].color : 'bg-gray-200';
-      });
-      strengthLabel.textContent = v.length > 0 ? levels[Math.max(score - 1, 0)].label : '';
-    });
-
-    // ===== Submit =====
-    document.getElementById('submitRegister').addEventListener('click', () => {
-      const name = document.getElementById('regName').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const agree = document.getElementById('regAgree').checked;
-
-      if (!name || !email || !agree) {
-        alert('Пожалуйста, заполните все поля и примите условия.');
-        return;
-      }
-
-      closeModal();
-      const toast = document.getElementById('successToast');
-      toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 3500);
-    });
-
-    // ===== 3D cards video on hover =====
-    document.querySelectorAll('.card-3d').forEach(card => {
-      const video = card.querySelector('video');
-      if (!video) return;
-      card.addEventListener('mouseenter', () => { video.play(); });
-      card.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
-    });
-  </script>
 </body>
 </html>
