@@ -29,26 +29,21 @@
     <a class="sidebar-link" onclick="setPage('campaigns')">
       <span class="icon">🚀</span> Кампании
     </a>
-    <a class="sidebar-link" onclick="setPage('stats')">
+    <a class="sidebar-link" onclick="setPage('stats')"> 
       <span class="icon">📈</span> Статистика
     </a>
     <a class="sidebar-link" onclick="setPage('budget')">
       <span class="icon">💳</span> Бюджет и оплата
     </a>
-    <a class="sidebar-link" onclick="setPage('audiences')">
-      <span class="icon">🎯</span> Аудитории
+    <a class="sidebar-link" onclick="setPage('map')">
+      <span class="icon">💳</span> Карта
     </a>
-    <a class="sidebar-link" onclick="setPage('creatives')">
-      <span class="icon">🖼️</span> Креативы
+    <a class="sidebar-link" onclick="setPage('courses')">
+      <span class="icon">💳</span> Курсы
     </a>
 
+
     <div class="pt-3 pb-1 px-2 text-xs text-gray-400 font-semibold uppercase tracking-wider">Настройки</div>
-    <a class="sidebar-link" onclick="setPage('profile')">
-      <span class="icon">👤</span> Профиль
-    </a>
-    <a class="sidebar-link" onclick="setPage('notifications')">
-      <span class="icon">🔔</span> Уведомления
-    </a>
     <a class="sidebar-link" onclick="setPage('help')">
       <span class="icon">💬</span> Поддержка
     </a>
@@ -61,7 +56,7 @@
       <div class="text-sm font-semibold truncate">Иван Иванов</div>
       <div class="text-xs text-gray-400 truncate">ivan@example.com</div>
     </div>
-    <button class="text-gray-400 hover:text-gray-700 text-lg" title="Выйти" onclick="window.location='index.html'">↩</button>
+    <button class="text-gray-400 hover:text-gray-700 text-lg" title="Выйти" onclick="window.location='/index.html'">↩</button>
   </div>
 </aside>
 
@@ -87,9 +82,12 @@
         <span class="text-base leading-none">+</span> Кампания
       </button>
       <!-- Notifications -->
-      <button class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-xl">
+      <button onclick="setPage('notifications')" class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-xl">
         🔔
         <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+      </button>
+      <button onclick="setPage('profile')" class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-xl">
+        <span class="icon">👤</span>
       </button>
     </div>
   </header>
@@ -239,11 +237,6 @@
           <div class="text-2xl mb-2">💰</div>
           <div class="text-sm font-semibold mb-1">Пополните баланс</div>
           <div class="text-xs text-gray-500">Осталось на 8 дней — пополните заранее</div>
-        </div>
-        <div class="bg-purple-50 rounded-2xl p-4 cursor-pointer hover:bg-purple-100 transition-colors">
-          <div class="text-2xl mb-2">🖼️</div>
-          <div class="text-sm font-semibold mb-1">Добавьте креативы</div>
-          <div class="text-xs text-gray-500">A/B тест повысит CTR в среднем на 18%</div>
         </div>
       </div>
     </div>
@@ -403,10 +396,6 @@
           <label class="block text-sm font-medium text-gray-600 mb-1.5">Телефон</label>
           <input value="+7 (999) 123-45-67" type="tel" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
-        <div class="sm:col-span-2">
-          <label class="block text-sm font-medium text-gray-600 mb-1.5">Название компании</label>
-          <input value="ООО Ромашка" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
       </div>
       <button class="px-6 py-3 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700">Сохранить изменения</button>
     </div>
@@ -422,24 +411,7 @@
       </div>
     </div>
   </div>
-  <div id="page-audiences" class="p-6 hidden">
-    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
-      <div class="text-center">
-        <div class="text-5xl mb-4">🎯</div>
-        <div class="font-bold text-xl mb-2">Аудитории</div>
-        <div class="text-gray-400 text-sm">Раздел в разработке</div>
-      </div>
-    </div>
-  </div>
-  <div id="page-creatives" class="p-6 hidden">
-    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
-      <div class="text-center">
-        <div class="text-5xl mb-4">🖼️</div>
-        <div class="font-bold text-xl mb-2">Креативы</div>
-        <div class="text-gray-400 text-sm">Раздел в разработке</div>
-      </div>
-    </div>
-  </div>
+
   <div id="page-notifications" class="p-6 hidden">
     <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
       <div class="text-center">
@@ -458,6 +430,24 @@
       </div>
     </div>
   </div>
+  <div id="page-map" class="p-6 hidden">
+    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
+      <div class="text-center">
+        <div class="text-5xl mb-4">📈</div>
+        <div class="font-bold text-xl mb-2">Карта</div>
+        <div class="text-gray-400 text-sm">Раздел в разработке</div>
+      </div>
+    </div>
+  </div>
+  <div id="page-courses" class="p-6 hidden">
+    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
+      <div class="text-center">
+        <div class="text-5xl mb-4">📈</div>
+        <div class="font-bold text-xl mb-2">Курсы</div>
+        <div class="text-gray-400 text-sm">Раздел в разработке</div>
+      </div>
+    </div>
+  </div>
 
 </div><!-- /main-content -->
 
@@ -467,10 +457,8 @@
     campaigns:     { title: 'Кампании',         sub: 'Управление рекламой' },
     stats:         { title: 'Статистика',       sub: 'Аналитика и отчёты' },
     budget:        { title: 'Бюджет и оплата',  sub: 'Управление финансами' },
-    audiences:     { title: 'Аудитории',        sub: 'Настройка таргетинга' },
-    creatives:     { title: 'Креативы',         sub: 'Баннеры и объявления' },
-    profile:       { title: 'Профиль',          sub: 'Настройки аккаунта' },
-    notifications: { title: 'Уведомления',      sub: 'Ваши оповещения' },
+    map:           { title: 'Карта',            sub: 'Интерактивная карта' },
+    courses:       { title: 'Курсы',            sub: 'Обучающие курсы' },
     help:          { title: 'Поддержка',        sub: 'Помощь и контакты' },
   };
 
