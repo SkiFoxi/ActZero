@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ActZero — Личный кабинет</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://api-maps.yandex.ru/v3/?apikey=3af54410-d862-48b4-a555-f0c28b53e7e8&lang=ru_RU" type="text/javascript" defer></script>
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -36,10 +37,10 @@
       <span class="icon">💳</span> Бюджет и оплата
     </a>
     <a class="sidebar-link" onclick="setPage('map')">
-      <span class="icon">💳</span> Карта
+      <span class="icon">🗺️</span> Карта
     </a>
     <a class="sidebar-link" onclick="setPage('courses')">
-      <span class="icon">💳</span> Курсы
+      <span class="icon">📚</span> Курсы
     </a>
 
 
@@ -122,7 +123,7 @@
           <span class="badge badge-green">+8%</span>
         </div>
         <div class="text-2xl font-bold mt-2">3 412</div>
-        <div class="text-sm text-gray-400 mt-0.5">Клики</div>
+        <div class="text-sm text-gray-400 mt-0.5">Пуки</div>
         <div class="bar-wrap mt-3">
           <div class="bar" style="height:35%"></div>
           <div class="bar" style="height:50%"></div>
@@ -433,9 +434,7 @@
   <div id="page-map" class="p-6 hidden">
     <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
       <div class="text-center">
-        <div class="text-5xl mb-4">📈</div>
-        <div class="font-bold text-xl mb-2">Карта</div>
-        <div class="text-gray-400 text-sm">Раздел в разработке</div>
+        <!-- <div id="map" style="width: 600px; height: 400px"></div> -->
       </div>
     </div>
   </div>
@@ -485,6 +484,8 @@
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('overlay').classList.remove('open');
   }
+
+  
 </script>
 
 </body>
