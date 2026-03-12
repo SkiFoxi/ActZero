@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ActZero — Личный кабинет</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://api-maps.yandex.ru/v3/?apikey=3af54410-d862-48b4-a555-f0c28b53e7e8&lang=ru_RU" type="text/javascript" defer></script>
+  <!-- <script src="https://api-maps.yandex.ru/v3/?apikey=3af54410-d862-48b4-a555-f0c28b53e7e8&lang=ru_RU" type="text/javascript" defer></script> -->
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -19,27 +19,32 @@
   <!-- Logo -->
   <div class="px-6 py-5 border-b border-gray-100">
     <div class="text-xl font-bold tracking-tight">ActZero</div>
-    <div class="text-xs text-gray-400 mt-0.5">НЕ Рекламный кабинет</div>
+    <div class="text-xs text-gray-400 mt-0.5">Рекламный кабинет</div>
   </div>
 
   <!-- Nav -->
   <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-    <a class="sidebar-link active" onclick="setPage('dashboard')">
+    <a class="sidebar-link active" onclick="window.location.href='lkabinet.html'">
       <span class="icon">📊</span> Обзор
     </a>
-    <a class="sidebar-link" onclick="setPage('campaigns')">
+   
+    <a class="sidebar-link" onclick="window.location.href='campaigns.html'">
       <span class="icon">🚀</span> Кампании
     </a>
-    <a class="sidebar-link" onclick="setPage('stats')"> 
+
+    <a class="sidebar-link" onclick="window.location.href='stats.html'">
       <span class="icon">📈</span> Статистика
     </a>
-    <a class="sidebar-link" onclick="setPage('budget')">
+  
+    <a class="sidebar-link" onclick="window.location.href='budget.html'">
       <span class="icon">💳</span> Бюджет и оплата
     </a>
-    <a class="sidebar-link" onclick="setPage('map')">
+
+    <a class="sidebar-link" onclick="window.location.href='map.html'">
       <span class="icon">🗺️</span> Карта
     </a>
-    <a class="sidebar-link" onclick="setPage('courses')">
+
+    <a class="sidebar-link" onclick="window.location.href='courses.html'">
       <span class="icon">📚</span> Курсы
     </a>
 
@@ -79,11 +84,11 @@
         <span>💰</span> 12 400 ₽
       </div>
       <!-- New campaign -->
-      <button onclick="setPage('campaigns')" class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-2">
+      <button onclick="window.location.href='campaigns.html'" class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-2">
         <span class="text-base leading-none">+</span> Кампания
       </button>
       <!-- Notifications -->
-      <button onclick="setPage('notifications')" class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-xl">
+      <button class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-xl">
         🔔
         <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
       </button>
@@ -243,127 +248,6 @@
     </div>
   </div>
 
-  <!-- ===== PAGE: CAMPAIGNS ===== -->
-  <div id="page-campaigns" class="p-6 hidden">
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-xl font-bold">Кампании</h2>
-        <p class="text-sm text-gray-400">Управляйте всеми рекламными кампаниями</p>
-      </div>
-      <button class="px-5 py-2.5 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700 flex items-center gap-2">
-        <span>+</span> Создать кампанию
-      </button>
-    </div>
-
-    <!-- Filters -->
-    <div class="flex gap-2 mb-4 flex-wrap">
-      <button class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium">Все</button>
-      <button class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm font-medium hover:bg-gray-100 border border-gray-200">Активные</button>
-      <button class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm font-medium hover:bg-gray-100 border border-gray-200">На паузе</button>
-      <button class="px-4 py-2 rounded-full bg-white text-gray-600 text-sm font-medium hover:bg-gray-100 border border-gray-200">Завершённые</button>
-    </div>
-
-    <!-- Table -->
-    <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
-      <!-- Header -->
-      <div class="campaign-row bg-gray-50 text-xs text-gray-400 font-semibold uppercase tracking-wider">
-        <div>Кампания</div>
-        <div>Бюджет / день</div>
-        <div>Клики · CTR</div>
-        <div>Расход</div>
-        <div class="text-center">Статус</div>
-      </div>
-      <!-- Rows -->
-      <div class="campaign-row">
-        <div>
-          <div class="font-semibold text-sm">Поиск — Главная</div>
-          <div class="text-xs text-gray-400">Поиск Яндекса · CPC</div>
-        </div>
-        <div class="text-sm font-medium">1 000 ₽</div>
-        <div class="text-sm">1 240 · <span class="text-green-600 font-semibold">4.2%</span></div>
-        <div class="text-sm font-medium">4 320 ₽</div>
-        <div class="flex justify-center"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      </div>
-      <div class="campaign-row">
-        <div>
-          <div class="font-semibold text-sm">Яндекс Карты — Офис</div>
-          <div class="text-xs text-gray-400">Карты · CPM</div>
-        </div>
-        <div class="text-sm font-medium">500 ₽</div>
-        <div class="text-sm">820 · <span class="text-green-600 font-semibold">3.8%</span></div>
-        <div class="text-sm font-medium">1 980 ₽</div>
-        <div class="flex justify-center"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      </div>
-      <div class="campaign-row">
-        <div>
-          <div class="font-semibold text-sm">Товарная галерея — Зима</div>
-          <div class="text-xs text-gray-400">Товарная галерея · CPC</div>
-        </div>
-        <div class="text-sm font-medium">300 ₽</div>
-        <div class="text-sm">320 · <span class="text-yellow-600 font-semibold">2.1%</span></div>
-        <div class="text-sm font-medium">960 ₽</div>
-        <div class="flex justify-center"><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
-      </div>
-      <div class="campaign-row">
-        <div>
-          <div class="font-semibold text-sm">РСЯ — Ретаргетинг</div>
-          <div class="text-xs text-gray-400">Рекламная сеть · CPM</div>
-        </div>
-        <div class="text-sm font-medium">700 ₽</div>
-        <div class="text-sm">530 · <span class="text-green-600 font-semibold">5.1%</span></div>
-        <div class="text-sm font-medium">2 100 ₽</div>
-        <div class="flex justify-center"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== PAGE: BUDGET ===== -->
-  <div id="page-budget" class="p-6 hidden">
-    <h2 class="text-xl font-bold mb-6">Бюджет и оплата</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Balance card -->
-      <div class="balance-card">
-        <div class="relative z-10">
-          <div class="text-sm text-blue-200 mb-1">Текущий баланс</div>
-          <div class="text-4xl font-bold mb-5">12 400 ₽</div>
-          <div class="text-sm text-blue-200 mb-3">Пополнить счёт</div>
-          <div class="flex flex-wrap gap-2 mb-4">
-            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">1 000 ₽</button>
-            <button class="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-semibold">5 000 ₽</button>
-            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">10 000 ₽</button>
-            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">Другая</button>
-          </div>
-          <button class="w-full py-3 bg-white text-blue-700 rounded-2xl font-bold hover:bg-blue-50 transition-colors">Пополнить</button>
-        </div>
-      </div>
-      <!-- History -->
-      <div class="bg-white rounded-3xl shadow-sm p-5">
-        <div class="font-bold mb-4">История транзакций</div>
-        <div class="space-y-3">
-          <div class="flex items-center gap-3 py-2 border-b border-gray-50">
-            <div class="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-lg flex-shrink-0">⬆️</div>
-            <div class="flex-1"><div class="text-sm font-semibold">Пополнение</div><div class="text-xs text-gray-400">28 фев, 14:32</div></div>
-            <div class="text-green-600 font-bold text-sm">+5 000 ₽</div>
-          </div>
-          <div class="flex items-center gap-3 py-2 border-b border-gray-50">
-            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-lg flex-shrink-0">📢</div>
-            <div class="flex-1"><div class="text-sm font-semibold">Поиск — Главная</div><div class="text-xs text-gray-400">27 фев, 00:00</div></div>
-            <div class="text-red-500 font-bold text-sm">-1 000 ₽</div>
-          </div>
-          <div class="flex items-center gap-3 py-2 border-b border-gray-50">
-            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-lg flex-shrink-0">📢</div>
-            <div class="flex-1"><div class="text-sm font-semibold">Карты — Офис</div><div class="text-xs text-gray-400">27 фев, 00:00</div></div>
-            <div class="text-red-500 font-bold text-sm">-500 ₽</div>
-          </div>
-          <div class="flex items-center gap-3 py-2">
-            <div class="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-lg flex-shrink-0">⬆️</div>
-            <div class="flex-1"><div class="text-sm font-semibold">Пополнение</div><div class="text-xs text-gray-400">20 фев, 10:15</div></div>
-            <div class="text-green-600 font-bold text-sm">+10 000 ₽</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- ===== PAGE: PROFILE ===== -->
   <div id="page-profile" class="p-6 hidden">
@@ -402,17 +286,6 @@
     </div>
   </div>
 
-  <!-- ===== PLACEHOLDER PAGES ===== -->
-  <div id="page-stats" class="p-6 hidden">
-    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
-      <div class="text-center">
-        <div class="text-5xl mb-4">📈</div>
-        <div class="font-bold text-xl mb-2">Статистика</div>
-        <div class="text-gray-400 text-sm">Раздел в разработке</div>
-      </div>
-    </div>
-  </div>
-
   <div id="page-notifications" class="p-6 hidden">
     <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
       <div class="text-center">
@@ -431,33 +304,13 @@
       </div>
     </div>
   </div>
-  <div id="page-map" class="p-6 hidden">
-    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
-      <div class="text-center">
-        <!-- <div id="map" style="width: 600px; height: 400px"></div> -->
-      </div>
-    </div>
-  </div>
-  <div id="page-courses" class="p-6 hidden">
-    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
-      <div class="text-center">
-        <div class="text-5xl mb-4">📈</div>
-        <div class="font-bold text-xl mb-2">Курсы</div>
-        <div class="text-gray-400 text-sm">Раздел в разработке</div>
-      </div>
-    </div>
-  </div>
+
 
 </div><!-- /main-content -->
 
 <script>
   const pages = {
     dashboard:     { title: 'Обзор',           sub: 'Добро пожаловать, Иван 👋' },
-    campaigns:     { title: 'Кампании',         sub: 'Управление рекламой' },
-    stats:         { title: 'Статистика',       sub: 'Аналитика и отчёты' },
-    budget:        { title: 'Бюджет и оплата',  sub: 'Управление финансами' },
-    map:           { title: 'Карта',            sub: 'Интерактивная карта' },
-    courses:       { title: 'Курсы',            sub: 'Обучающие курсы' },
     help:          { title: 'Поддержка',        sub: 'Помощь и контакты' },
   };
 

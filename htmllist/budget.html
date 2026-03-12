@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ActZero — Бюджет и оплата</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Manrope', sans-serif; }
+
+    .sidebar {
+      width: 260px;
+      min-height: 100vh;
+      background: #fff;
+      border-right: 1px solid #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 40;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      border-radius: 14px;
+      color: #6b7280;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.18s ease;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .sidebar-link:hover { background: #f5f7ff; color: #1d4ed8; }
+    .sidebar-link.active { background: #eff6ff; color: #2563eb; font-weight: 700; }
+    .sidebar-link .icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      background: #f3f4f6;
+      transition: background 0.18s;
+      flex-shrink: 0;
+    }
+    .sidebar-link.active .icon { background: #dbeafe; }
+    .sidebar-link:hover .icon { background: #dbeafe; }
+
+    .main-content {
+      margin-left: 260px;
+      min-height: 100vh;
+      background: #f8fafc;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 39;
+      backdrop-filter: blur(2px);
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .main-content { margin-left: 0; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up   { animation: fadeUp 0.4s ease both; }
+    .fade-up-1 { animation-delay: 0.05s; }
+
+    .balance-card {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%);
+      border-radius: 1.5rem;
+      padding: 1.75rem;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+    }
+    .balance-card::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; right: 30px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+<div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+  <div class="px-6 py-5 border-b border-gray-100">
+    <div class="text-xl font-bold tracking-tight">ActZero</div>
+    <div class="text-xs text-gray-400 mt-0.5">Рекламный кабинет</div>
+  </div>
+
+  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+    <a class="sidebar-link" onclick="window.location.href='lkabinet.html'">
+      <span class="icon">📊</span> Обзор
+    </a>
+
+    <a class="sidebar-link" onclick="window.location.href='campaigns.html'">
+      <span class="icon">🚀</span> Кампании
+    </a>
+
+    <a class="sidebar-link" onclick="window.location.href='stats.html'">
+      <span class="icon">📈</span> Статистика
+    </a>
+  
+    <a class="sidebar-link active" onclick="window.location.href='budget.html'">
+      <span class="icon">💳</span> Бюджет и оплата
+    </a>
+
+    <a class="sidebar-link" onclick="window.location.href='map.html'">
+      <span class="icon">🗺️</span> Карта
+    </a>
+
+    <a class="sidebar-link" onclick="window.location.href='courses.html'">
+      <span class="icon">📚</span> Курсы
+    </a>
+
+    <div class="pt-3 pb-1 px-2 text-xs text-gray-400 font-semibold uppercase tracking-wider">Настройки</div>
+    <a class="sidebar-link" href="lkabinet.html">
+      <span class="icon">💬</span> Поддержка
+    </a>
+  </nav>
+
+  <div class="px-4 py-4 border-t border-gray-100 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">ИИ</div>
+    <div class="flex-1 min-w-0">
+      <div class="text-sm font-semibold truncate">Иван Иванов</div>
+      <div class="text-xs text-gray-400 truncate">ivan@example.com</div>
+    </div>
+    <button class="text-gray-400 hover:text-gray-700 text-lg" title="Выйти" onclick="window.location='index.html'">↩</button>
+  </div>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main-content">
+
+  <!-- Top bar -->
+  <header class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+    <div class="flex items-center gap-3">
+      <button class="md:hidden p-2 rounded-xl hover:bg-gray-100 text-xl" onclick="openSidebar()">☰</button>
+      <div>
+        <h1 class="text-lg font-bold">Бюджет и оплата</h1>
+        <div class="text-xs text-gray-400">Управление финансами</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="hidden sm:flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
+        <span>💰</span> 12 400 ₽
+      </div>
+      <button onclick="window.location='lkabinet.html'" class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-2">
+        <span class="text-base leading-none">+</span> Кампания
+      </button>
+      <button class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-xl">
+        🔔
+        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== PAGE: BUDGET (из lkabinet) ===== -->
+  <div id="page-budget" class="p-6 fade-up fade-up-1">
+    <h2 class="text-xl font-bold mb-6">Бюджет и оплата</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Balance card -->
+      <div class="balance-card">
+        <div class="relative z-10">
+          <div class="text-sm text-blue-200 mb-1">Текущий баланс</div>
+          <div class="text-4xl font-bold mb-5">12 400 ₽</div>
+          <div class="text-sm text-blue-200 mb-3">Пополнить счёт</div>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">1 000 ₽</button>
+            <button class="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-semibold">5 000 ₽</button>
+            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">10 000 ₽</button>
+            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">Другая</button>
+          </div>
+          <button class="w-full py-3 bg-white text-blue-700 rounded-2xl font-bold hover:bg-blue-50 transition-colors">Пополнить</button>
+        </div>
+      </div>
+      <!-- History -->
+      <div class="bg-white rounded-3xl shadow-sm p-5">
+        <div class="font-bold mb-4">История транзакций</div>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3 py-2 border-b border-gray-50">
+            <div class="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-lg flex-shrink-0">⬆️</div>
+            <div class="flex-1"><div class="text-sm font-semibold">Пополнение</div><div class="text-xs text-gray-400">28 фев, 14:32</div></div>
+            <div class="text-green-600 font-bold text-sm">+5 000 ₽</div>
+          </div>
+          <div class="flex items-center gap-3 py-2 border-b border-gray-50">
+            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-lg flex-shrink-0">📢</div>
+            <div class="flex-1"><div class="text-sm font-semibold">Поиск — Главная</div><div class="text-xs text-gray-400">27 фев, 00:00</div></div>
+            <div class="text-red-500 font-bold text-sm">-1 000 ₽</div>
+          </div>
+          <div class="flex items-center gap-3 py-2 border-b border-gray-50">
+            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-lg flex-shrink-0">📢</div>
+            <div class="flex-1"><div class="text-sm font-semibold">Карты — Офис</div><div class="text-xs text-gray-400">27 фев, 00:00</div></div>
+            <div class="text-red-500 font-bold text-sm">-500 ₽</div>
+          </div>
+          <div class="flex items-center gap-3 py-2">
+            <div class="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-lg flex-shrink-0">⬆️</div>
+            <div class="flex-1"><div class="text-sm font-semibold">Пополнение</div><div class="text-xs text-gray-400">20 фев, 10:15</div></div>
+            <div class="text-green-600 font-bold text-sm">+10 000 ₽</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<script>
+  function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('overlay').classList.add('open');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('open');
+  }
+</script>
+
+</body>
+</html>
