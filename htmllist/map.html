@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ActZero — Карта</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://api-maps.yandex.ru/v3/?apikey=3af54410-d862-48b4-a555-f0c28b53e7e8&lang=ru_RU" type="text/javascript" defer></script>
+  <!-- Подключаем Яндекс.Карты API v2.1 -->
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=009332ba-3ebb-4304-b4a6-5094de979623&lang=ru_RU" type="text/javascript"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { font-family: 'Manrope', sans-serif; }
@@ -55,6 +56,8 @@
       margin-left: 260px;
       min-height: 100vh;
       background: #f8fafc;
+      display: flex;
+      flex-direction: column;
     }
 
     /* ===== MOBILE ===== */
@@ -79,6 +82,22 @@
     }
     .fade-up   { animation: fadeUp 0.4s ease both; }
     .fade-up-1 { animation-delay: 0.05s; }
+
+    /* Растягивание карты */
+    #page-map {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #page-map > div {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #map {
+      flex: 1;
+      width: 100%;
+    }
   </style>
 </head>
 <body class="bg-gray-50">
@@ -117,7 +136,6 @@
     <a class="sidebar-link" onclick="window.location.href='courses.html'">
       <span class="icon">📚</span> Курсы
     </a>
-
 
     <div class="pt-3 pb-1 px-2 text-xs text-gray-400 font-semibold uppercase tracking-wider">Настройки</div>
     <a class="sidebar-link" href="lkabinet.html">
@@ -161,12 +179,10 @@
     </div>
   </header>
 
-  <!-- ===== PAGE: MAP (из lkabinet) ===== -->
+  <!-- ===== PAGE: MAP ===== -->
   <div id="page-map" class="p-6 fade-up fade-up-1">
-    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
-      <div class="text-center">
-        <div id="map" style="width: 600px; height: 400px"></div>
-      </div>
+    <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
+      <div id="map" style="width: 100%; height: 500px;"></div>
     </div>
   </div>
 
@@ -181,6 +197,121 @@
     document.getElementById('sidebar').classList.remove('open');
     document.getElementById('overlay').classList.remove('open');
   }
+
+  // ========== ДАННЫЕ ЛОКАЦИЙ ==========
+  const locationsData = {
+    "locations": [
+      {
+        "id": "loc_1",
+        "name": "Локация 1",
+        "address": "ул. Примерная, д. 10, Москва",
+        "coordinates": { "lat": 55.7558, "lon": 37.6173 },
+        "region": "Москва",
+        "city": "Москва",
+        "description": "Описание локации",
+        "business_types_suitable": ["cafe", "restaurant"],
+        "traffic_score": 8.5,
+        "competition_density": 2.3,
+        "demographics": {
+          "age_group": "26-35",
+          "average_income": 75000,
+          "interests": ["food", "technology"],
+          "population_density": 5000
+        },
+        "score": 0.95
+      },
+      {
+        "id": "loc_2",
+        "name": "Локация 2",
+        "address": "ул. Тверская, д. 5, Москва",
+        "coordinates": { "lat": 55.7584, "lon": 37.6086 },
+        "region": "Москва",
+        "city": "Москва",
+        "description": "Оживлённое место",
+        "business_types_suitable": ["shop", "cafe"],
+        "traffic_score": 9.2,
+        "competition_density": 4.1,
+        "demographics": {
+          "age_group": "18-35",
+          "average_income": 80000,
+          "interests": ["shopping", "food"],
+          "population_density": 7000
+        },
+        "score": 0.88
+      }
+    ],
+    "total": 2
+  };
+
+  // Инициализация Яндекс.Карт
+  function initMap() {
+    const firstLocation = locationsData.locations[0];
+    const center = firstLocation 
+      ? [firstLocation.coordinates.lat, firstLocation.coordinates.lon]
+      : [55.7558, 37.6173];
+
+    // Создаём карту
+    const map = new ymaps.Map("map", {
+      center: center,
+      zoom: 12,
+      controls: ["zoomControl", "fullscreenControl"]
+    });
+
+    // Перебираем локации и добавляем метки по одной
+    locationsData.locations.forEach(location => {
+      const coords = [location.coordinates.lat, location.coordinates.lon];
+      
+      // Формируем содержимое балуна
+      const balloonContent = `
+        <div style="max-width: 280px;">
+          <b>${location.name}</b><br>
+          <strong>Адрес:</strong> ${location.address}<br>
+          <strong>Описание:</strong> ${location.description}<br>
+          <strong>Подходит для:</strong> ${location.business_types_suitable.join(', ')}<br>
+          <strong>Трафик:</strong> ${location.traffic_score}/10<br>
+          <strong>Конкуренция:</strong> ${location.competition_density}<br>
+          <strong>Возрастная группа:</strong> ${location.demographics.age_group}<br>
+          <strong>Средний доход:</strong> ${location.demographics.average_income} ₽<br>
+          <strong>Рейтинг:</strong> ${location.score}
+        </div>
+      `;
+
+      // Создаём метку
+      const placemark = new ymaps.Placemark(
+        coords,
+        {
+          balloonContent: balloonContent,
+          hintContent: location.name
+        },
+        {
+          preset: "islands#blueCircleIcon"   // Используем только preset, iconColor не нужен
+        }
+      );
+      
+      // Добавляем метку на карту
+      map.geoObjects.add(placemark);
+    });
+
+    // Если меток несколько, подгоняем карту так, чтобы показать все
+    if (locationsData.locations.length > 1) {
+      const bounds = map.geoObjects.getBounds();
+      if (bounds) {
+        map.setBounds(bounds, {
+          checkZoomRange: true,
+          zoomMargin: 50
+        });
+      }
+    }
+  }
+
+  // Ждём загрузки API и DOM
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof ymaps !== 'undefined') {
+      ymaps.ready(initMap);
+    } else {
+      console.error('Яндекс.Карты не загрузились');
+    }
+  });
 </script>
 
 </body>
