@@ -1,0 +1,81 @@
+<!-- Модальное окно регистрации -->
+<div id="registerModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <div id="modalBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10 z-10">
+    <button id="closeModal" class="absolute top-5 right-5 w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-black transition-colors text-lg font-bold">✕</button>
+    <div class="mb-8 text-center">
+      <div class="text-2xl font-bold mb-1">ActZero</div>
+      <h2 class="text-2xl md:text-3xl font-bold mt-3 mb-2">Создать аккаунт modal</h2>
+      <p class="text-gray-500 text-sm">Начните привлекать клиентов уже сегодня</p>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Имя</label>
+        <input type="text" id="regName" placeholder="Иван Иванов" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+        <input type="email" id="regEmail" placeholder="email@example.com" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Телефон</label>
+        <input type="tel" id="regPhone" placeholder="+7 (999) 000-00-00" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
+        <div class="relative">
+          <input type="password" id="regPassword" placeholder="Минимум 8 символов" autocomplete="new-password" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 pr-12">
+          <button id="togglePassword" type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">👁</button>
+        </div>
+        <div class="mt-2 flex gap-1">
+          <div class="h-1 flex-1 rounded-full bg-gray-200" id="bar1"></div>
+          <div class="h-1 flex-1 rounded-full bg-gray-200" id="bar2"></div>
+          <div class="h-1 flex-1 rounded-full bg-gray-200" id="bar3"></div>
+          <div class="h-1 flex-1 rounded-full bg-gray-200" id="bar4"></div>
+        </div>
+        <p id="strengthLabel" class="text-xs text-gray-400 mt-1"></p>
+      </div>
+      <div class="flex items-start gap-3 pt-1">
+        <input type="checkbox" id="regAgree" class="mt-0.5 w-4 h-4 rounded accent-blue-600">
+        <label for="regAgree" class="text-xs text-gray-500">Я принимаю условия использования и политику конфиденциальности</label>
+      </div>
+      <button id="submitRegister" class="w-full py-3.5 rounded-2xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all mt-2">Зарегистрироваться</button>
+      <div class="flex items-center gap-3 my-1">
+        <div class="flex-1 h-px bg-gray-200"></div>
+        <span class="text-xs text-gray-400">или</span>
+        <div class="flex-1 h-px bg-gray-200"></div>
+      </div>
+      <p class="text-center text-sm text-gray-500">Уже есть аккаунт? <a href="#" id="showLoginFromRegister" class="text-blue-600 font-medium hover:underline ml-1">Войти</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно входа -->
+<div id="loginModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <div id="loginModalBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10 z-10">
+    <button id="closeLoginModal" class="absolute top-5 right-5 w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-black transition-colors text-lg font-bold">✕</button>
+    <div class="mb-8 text-center">
+      <div class="text-2xl font-bold mb-1">ActZero</div>
+      <h2 class="text-2xl md:text-3xl font-bold mt-3 mb-2">Войти</h2>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+        <input type="email" id="loginEmail" autocomplete="email" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+      </div>
+      <button id="submitLogin" class="w-full py-3.5 rounded-2xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all mt-2">Войти</button>
+      <p class="text-center text-sm text-gray-500">Нет аккаунта? <a href="#" id="showRegisterFromLogin" class="text-blue-600 font-medium hover:underline ml-1">Зарегистрироваться</a></p>
+    </div>
+  </div>
+</div>
+
+<div id="successToast" class="fixed bottom-6 right-6 z-60 hidden">
+  <div class="bg-green-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 font-medium text-sm">
+    <span class="text-xl">✅</span> Аккаунт успешно создан!
+  </div>
+</div>

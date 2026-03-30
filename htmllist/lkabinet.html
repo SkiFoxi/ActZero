@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ActZero — Личный кабинет</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- <script src="https://api-maps.yandex.ru/v3/?apikey=3af54410-d862-48b4-a555-f0c28b53e7e8&lang=ru_RU" type="text/javascript" defer></script> -->
   <link rel="stylesheet" href="/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
+
 <body class="bg-gray-50">
 
 <!-- Sidebar overlay (mobile) -->
@@ -59,10 +59,10 @@
   <div class="px-4 py-4 border-t border-gray-100 flex items-center gap-3">
     <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">ИИ</div>
     <div class="flex-1 min-w-0">
-      <div class="text-sm font-semibold truncate">Иван Иванов</div>
-      <div class="text-xs text-gray-400 truncate">ivan@example.com</div>
+      <div class="text-sm font-semibold truncate" id="sidebar-name">НикНейм</div>
+      <div class="text-xs text-gray-400 truncate" id="sidebar-email">Почта</div>
     </div>
-    <button class="text-gray-400 hover:text-gray-700 text-lg" title="Выйти" onclick="window.location='/index.html'">↩</button>
+    <button class="text-gray-400 hover:text-gray-700 text-lg" title="Выйти" onclick="logout()">↩</button>
   </div>
 </aside>
 
@@ -81,7 +81,7 @@
     <div class="flex items-center gap-3">
       <!-- Balance pill -->
       <div class="hidden sm:flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
-        <span>💰</span> 12 400 ₽
+        <span>💰</span> <span class="user-balance">0 ₽</span>
       </div>
       <!-- New campaign -->
       <button onclick="window.location.href='campaigns.html'" class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-2">
@@ -183,7 +183,7 @@
       <div class="balance-card">
         <div class="relative z-10">
           <div class="text-sm text-blue-200 font-medium mb-1">Баланс счёта</div>
-          <div class="text-3xl font-bold mb-4">12 400 ₽</div>
+          <div class="text-3xl font-bold mb-4 user-balance">0 ₽</div>
           <div class="flex gap-2">
             <button class="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-semibold hover:bg-blue-50">Пополнить</button>
             <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">История</button>
@@ -257,8 +257,8 @@
       <div class="flex items-center gap-5">
         <div class="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">ИИ</div>
         <div>
-          <div class="font-bold text-lg">Иван Иванов</div>
-          <div class="text-gray-400 text-sm">ivan@example.com</div>
+          <div class="font-bold text-lg" id="profile-name">НикНейм</div>
+          <div class="text-gray-400 text-sm" id="profile-email">Почта</div>
           <button class="mt-2 text-sm text-blue-600 hover:underline">Изменить фото</button>
         </div>
       </div>
@@ -267,19 +267,19 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1.5">Имя</label>
-          <input value="Иван" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input id="profile-input-name" class="...">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1.5">Фамилия</label>
-          <input value="Иванов" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input id="profile-input-name" class="...">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1.5">Email</label>
-          <input value="ivan@example.com" type="email" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input id="profile-input-email" type="email" class="...">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1.5">Телефон</label>
-          <input value="+7 (999) 123-45-67" type="tel" class="w-full px-4 py-3 rounded-2xl border border-gray-200 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input id="profile-input-phone" type="tel" class="...">
         </div>
       </div>
       <button class="px-6 py-3 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700">Сохранить изменения</button>
@@ -304,42 +304,11 @@
       </div>
     </div>
   </div>
-
-
 </div><!-- /main-content -->
 
-<script>
-  const pages = {
-    dashboard:     { title: 'Обзор',           sub: 'Добро пожаловать, Иван 👋' },
-    help:          { title: 'Поддержка',        sub: 'Помощь и контакты' },
-  };
-
-  function setPage(id) {
-    // Hide all pages
-    document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('hidden'));
-    // Show target
-    document.getElementById('page-' + id).classList.remove('hidden');
-    // Update header
-    document.getElementById('page-title').textContent = pages[id].title;
-    document.getElementById('page-subtitle').textContent = pages[id].sub;
-    // Update sidebar active
-    document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    // Close mobile sidebar
-    closeSidebar();
-  }
-
-  function openSidebar() {
-    document.getElementById('sidebar').classList.add('open');
-    document.getElementById('overlay').classList.add('open');
-  }
-  function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('overlay').classList.remove('open');
-  }
-
-  
-</script>
+<script src="/js/script.js"></script>
+<script src="/js/pages/lkabinet.js"></script>
+<script src="/js/auth-token.js"></script>
 
 </body>
 </html>
