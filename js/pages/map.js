@@ -68,64 +68,138 @@ function initMap() {
     controls: ["zoomControl", "fullscreenControl"]
   });
 
-  // Перебираем локации и добавляем метки по одной
-  locationsData.locations.forEach(location => {
-    const coords = [location.coordinates.lat, location.coordinates.lon];
+  let markersVisible = true;
+  let markers = [];
+  let clusterMarker = null;
 
-    // Формируем содержимое балуна
+  // Получаем центр всех локаций
+  function getClusterCenter() {
+    let avgLat = 0, avgLon = 0;
+    locationsData.locations.forEach(loc => {
+      avgLat += loc.coordinates.lat;
+      avgLon += loc.coordinates.lon;
+    });
+    return [avgLat / locationsData.locations.length, avgLon / locationsData.locations.length];
+  }
+
+  // Функция для добавления отдельных меток
+  function showIndividualMarkers() {
+    // Удаляем кластер метку если есть
+    if (clusterMarker) {
+      map.geoObjects.remove(clusterMarker);
+      clusterMarker = null;
+    }
+
+    // Добавляем отдельные метки
+    locationsData.locations.forEach((location, index) => {
+      if (markers[index]) return; // Уже добавлена
+
+      const coords = [location.coordinates.lat, location.coordinates.lon];
+
+      const balloonContent = `
+        <div style="max-width: 280px;">
+          <b>${location.name}</b><br>
+          <strong>Адрес:</strong> ${location.address}<br>
+          <strong>Описание:</strong> ${location.description}<br>
+          <strong>Подходит для:</strong> ${location.business_types_suitable.join(', ')}<br>
+          <strong>Трафик:</strong> ${location.traffic_score}/10<br>
+          <strong>Конкуренция:</strong> ${location.competition_density}<br>
+          <strong>Возрастная группа:</strong> ${location.demographics.age_group}<br>
+          <strong>Средний доход:</strong> ${location.demographics.average_income} ₽<br>
+          <strong>Рейтинг:</strong> ${location.score}
+        </div>
+      `;
+
+      const placemark = new ymaps.Placemark(
+        coords,
+        {
+          balloonContent: balloonContent,
+          hintContent: location.name,
+          iconCaption: (index + 1).toString()
+        },
+        {
+          preset: "islands#blueCircleIcon"
+        }
+      );
+
+      map.geoObjects.add(placemark);
+      markers[index] = placemark;
+    });
+
+    markersVisible = true;
+  }
+
+  // Функция для показа кластер метки
+  function showClusterMarker() {
+    // Удаляем отдельные метки
+    markers.forEach(marker => {
+      if (marker) {
+        map.geoObjects.remove(marker);
+      }
+    });
+    markers = [];
+
+    const center = getClusterCenter();
+    const count = locationsData.locations.length;
+
     const balloonContent = `
-      <div style="max-width: 280px;">
-        <b>${location.name}</b><br>
-        <strong>Адрес:</strong> ${location.address}<br>
-        <strong>Описание:</strong> ${location.description}<br>
-        <strong>Подходит для:</strong> ${location.business_types_suitable.join(', ')}<br>
-        <strong>Трафик:</strong> ${location.traffic_score}/10<br>
-        <strong>Конкуренция:</strong> ${location.competition_density}<br>
-        <strong>Возрастная группа:</strong> ${location.demographics.age_group}<br>
-        <strong>Средний доход:</strong> ${location.demographics.average_income} ₽<br>
-        <strong>Рейтинг:</strong> ${location.score}
+      <div style="text-align: center; max-width: 280px;">
+        <b>Локации</b><br>
+        Всего: ${count}<br>
+        <small>Приближайте карту для подробностей</small>
       </div>
     `;
 
-    // Создаём метку
-    const placemark = new ymaps.Placemark(
-      coords,
+    clusterMarker = new ymaps.Placemark(
+      center,
       {
         balloonContent: balloonContent,
-        hintContent: location.name,
-        iconCaption: (locationsData.locations.indexOf(location) + 1).toString()
+        hintContent: `Локации (${count})`,
+        iconCaption: count.toString()
       },
       {
         preset: "islands#blueCircleIcon"
       }
     );
 
-    // Добавляем метку на карту
-    map.geoObjects.add(placemark);
+    map.geoObjects.add(clusterMarker);
+    markersVisible = false;
+  }
+
+  // Обработчик изменения зума
+  map.events.add('boundschange', () => {
+    const zoom = map.getZoom();
+
+    if (zoom < 14 && markersVisible) {
+      // Уменьшение зума - показываем кластер
+      showClusterMarker();
+    } else if (zoom >= 14 && !markersVisible) {
+      // Увеличение зума - показываем отдельные метки
+      showIndividualMarkers();
+    }
   });
 
-  // Если меток несколько, подгоняем карту так, чтобы показать все
+  // Инициальная загрузка
+  showIndividualMarkers();
+
+  // Подгоняем карту под все локации
   if (locationsData.locations.length > 1) {
-    const bounds = map.geoObjects.getBounds();
-    if (bounds) {
-      map.setBounds(bounds, {
-        checkZoomRange: true,
-        zoomMargin: 50
-      });
-    }
+    const allCoords = locationsData.locations.map(loc =>
+      [loc.coordinates.lat, loc.coordinates.lon]
+    );
+    const bounds = ymaps.util.bounds.fromPoints(allCoords);
+    map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 50 });
   }
 
   // Обработка изменения размера окна
   const mapContainer = document.getElementById('map');
   const resizeObserver = new ResizeObserver(() => {
     if (locationsData.locations.length > 1) {
-      const bounds = map.geoObjects.getBounds();
-      if (bounds) {
-        map.setBounds(bounds, {
-          checkZoomRange: true,
-          zoomMargin: 50
-        });
-      }
+      const allCoords = locationsData.locations.map(loc =>
+        [loc.coordinates.lat, loc.coordinates.lon]
+      );
+      const bounds = ymaps.util.bounds.fromPoints(allCoords);
+      map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 50 });
     }
     map.container.fitToViewport();
   });
