@@ -8,96 +8,9 @@
   <!-- Подключаем Яндекс.Карты API v2.1 -->
   <script src="https://api-maps.yandex.ru/2.1/?apikey=009332ba-3ebb-4304-b4a6-5094de979623&lang=ru_RU" type="text/javascript"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/map.css">
   <style>
     * { font-family: 'Manrope', sans-serif; }
-
-    /* ===== SIDEBAR ===== */
-    .sidebar {
-      width: 260px;
-      min-height: 100vh;
-      background: #fff;
-      border-right: 1px solid #f0f0f0;
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0; left: 0;
-      z-index: 40;
-      transition: transform 0.3s ease;
-    }
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 16px;
-      border-radius: 14px;
-      color: #6b7280;
-      font-weight: 500;
-      font-size: 0.9rem;
-      transition: all 0.18s ease;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .sidebar-link:hover { background: #f5f7ff; color: #1d4ed8; }
-    .sidebar-link.active { background: #eff6ff; color: #2563eb; font-weight: 700; }
-    .sidebar-link .icon {
-      width: 36px; height: 36px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
-      background: #f3f4f6;
-      transition: background 0.18s;
-      flex-shrink: 0;
-    }
-    .sidebar-link.active .icon { background: #dbeafe; }
-    .sidebar-link:hover .icon { background: #dbeafe; }
-
-    /* ===== MAIN CONTENT ===== */
-    .main-content {
-      margin-left: 260px;
-      min-height: 100vh;
-      background: #f8fafc;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ===== MOBILE ===== */
-    .sidebar-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 39;
-      backdrop-filter: blur(2px);
-    }
-    @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.open { transform: translateX(0); }
-      .sidebar-overlay.open { display: block; }
-      .main-content { margin-left: 0; }
-    }
-
-    /* ===== ANIMATIONS ===== */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .fade-up   { animation: fadeUp 0.4s ease both; }
-    .fade-up-1 { animation-delay: 0.05s; }
-
-    /* Растягивание карты */
-    #page-map {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    #page-map > div {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    #map {
-      flex: 1;
-      width: 100%;
-    }
   </style>
 </head>
 <body class="bg-gray-50">
@@ -182,137 +95,13 @@
   <!-- ===== PAGE: MAP ===== -->
   <div id="page-map" class="p-6 fade-up fade-up-1">
     <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
-      <div id="map" style="width: 100%; height: 500px;"></div>
+      <div id="map" style="width: 100%; height: 100%;"></div>
     </div>
   </div>
 
 </div><!-- /main-content -->
 
-<script>
-  function openSidebar() {
-    document.getElementById('sidebar').classList.add('open');
-    document.getElementById('overlay').classList.add('open');
-  }
-  function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('overlay').classList.remove('open');
-  }
-
-  // ========== ДАННЫЕ ЛОКАЦИЙ ==========
-  const locationsData = {
-    "locations": [
-      {
-        "id": "loc_1",
-        "name": "Локация 1",
-        "address": "ул. Примерная, д. 10, Москва",
-        "coordinates": { "lat": 55.7558, "lon": 37.6173 },
-        "region": "Москва",
-        "city": "Москва",
-        "description": "Описание локации",
-        "business_types_suitable": ["cafe", "restaurant"],
-        "traffic_score": 8.5,
-        "competition_density": 2.3,
-        "demographics": {
-          "age_group": "26-35",
-          "average_income": 75000,
-          "interests": ["food", "technology"],
-          "population_density": 5000
-        },
-        "score": 0.95
-      },
-      {
-        "id": "loc_2",
-        "name": "Локация 2",
-        "address": "ул. Тверская, д. 5, Москва",
-        "coordinates": { "lat": 55.7584, "lon": 37.6086 },
-        "region": "Москва",
-        "city": "Москва",
-        "description": "Оживлённое место",
-        "business_types_suitable": ["shop", "cafe"],
-        "traffic_score": 9.2,
-        "competition_density": 4.1,
-        "demographics": {
-          "age_group": "18-35",
-          "average_income": 80000,
-          "interests": ["shopping", "food"],
-          "population_density": 7000
-        },
-        "score": 0.88
-      }
-    ],
-    "total": 2
-  };
-
-  // Инициализация Яндекс.Карт
-  function initMap() {
-    const firstLocation = locationsData.locations[0];
-    const center = firstLocation 
-      ? [firstLocation.coordinates.lat, firstLocation.coordinates.lon]
-      : [55.7558, 37.6173];
-
-    // Создаём карту
-    const map = new ymaps.Map("map", {
-      center: center,
-      zoom: 12,
-      controls: ["zoomControl", "fullscreenControl"]
-    });
-
-    // Перебираем локации и добавляем метки по одной
-    locationsData.locations.forEach(location => {
-      const coords = [location.coordinates.lat, location.coordinates.lon];
-      
-      // Формируем содержимое балуна
-      const balloonContent = `
-        <div style="max-width: 280px;">
-          <b>${location.name}</b><br>
-          <strong>Адрес:</strong> ${location.address}<br>
-          <strong>Описание:</strong> ${location.description}<br>
-          <strong>Подходит для:</strong> ${location.business_types_suitable.join(', ')}<br>
-          <strong>Трафик:</strong> ${location.traffic_score}/10<br>
-          <strong>Конкуренция:</strong> ${location.competition_density}<br>
-          <strong>Возрастная группа:</strong> ${location.demographics.age_group}<br>
-          <strong>Средний доход:</strong> ${location.demographics.average_income} ₽<br>
-          <strong>Рейтинг:</strong> ${location.score}
-        </div>
-      `;
-
-      // Создаём метку
-      const placemark = new ymaps.Placemark(
-        coords,
-        {
-          balloonContent: balloonContent,
-          hintContent: location.name
-        },
-        {
-          preset: "islands#blueCircleIcon"   // Используем только preset, iconColor не нужен
-        }
-      );
-      
-      // Добавляем метку на карту
-      map.geoObjects.add(placemark);
-    });
-
-    // Если меток несколько, подгоняем карту так, чтобы показать все
-    if (locationsData.locations.length > 1) {
-      const bounds = map.geoObjects.getBounds();
-      if (bounds) {
-        map.setBounds(bounds, {
-          checkZoomRange: true,
-          zoomMargin: 50
-        });
-      }
-    }
-  }
-
-  // Ждём загрузки API и DOM
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof ymaps !== 'undefined') {
-      ymaps.ready(initMap);
-    } else {
-      console.error('Яндекс.Карты не загрузились');
-    }
-  });
-</script>
+<script src="/js/pages/map.js"></script>
 
 </body>
 </html>
