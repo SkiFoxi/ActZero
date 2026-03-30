@@ -77,6 +77,295 @@
   backdrop-filter: blur(2px);
 }
 
+/* ===== BALLOON CAROUSEL ===== */
+.balloon-carousel {
+  width: 280px;
+  max-width: 280px;
+}
+
+.balloon-carousel .carousel-slide {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.balloon-carousel .carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.balloon-carousel .carousel-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.balloon-carousel .carousel-nav button {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.balloon-carousel .carousel-nav button:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.balloon-carousel .carousel-index {
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.balloon-info {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+/* ===== MODERN BALLOON STYLES ===== */
+.ymaps-2-1-79-balloon {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+  overflow: hidden !important;
+}
+
+.ymaps-2-1-79-balloon__content {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #ffffff;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Кастомный балун */
+.modern-balloon {
+  max-width: 320px;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.modern-balloon .carousel-container {
+  position: relative;
+  background: #f8fafc;
+}
+
+.modern-balloon .carousel-slide {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.modern-balloon .carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.modern-balloon .carousel-nav {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 12px;
+  pointer-events: none;
+}
+
+.modern-balloon .carousel-nav button {
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  color: white;
+  border: none;
+  border-radius: 32px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: bold;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.modern-balloon .carousel-nav button:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.05);
+}
+
+.modern-balloon .carousel-index {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  pointer-events: auto;
+}
+
+.modern-balloon .balloon-info {
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #1e293b;
+}
+
+.modern-balloon .balloon-info b {
+  font-size: 16px;
+  color: #0f172a;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.modern-balloon .balloon-info strong {
+  color: #334155;
+  font-weight: 600;
+}
+
+.modern-balloon .info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.modern-balloon .score-badge {
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.modern-balloon .traffic-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.modern-balloon .traffic-score::before {
+  content: "🚦";
+  font-size: 12px;
+}
+
+.modern-balloon .competition-density::before {
+  content: "🏪";
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+.modern-balloon .address {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0;
+  color: #475569;
+  font-size: 12px;
+}
+
+.modern-balloon .address::before {
+  content: "📍";
+  font-size: 12px;
+}
+
+.modern-balloon .description {
+  margin: 8px 0;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.modern-balloon .business-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.modern-balloon .business-type {
+  background: #eef2ff;
+  color: #1e40af;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.modern-balloon .demographics {
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 12px;
+  margin-top: 12px;
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modern-balloon .demographics-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #334155;
+}
+
+.modern-balloon .rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef9c3;
+  color: #854d0e;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.modern-balloon .rating::before {
+  content: "⭐";
+}
+
+/* Анимация плавного появления */
+.ymaps-2-1-79-balloon {
+  animation: balloonFadeIn 0.2s ease-out;
+}
+
+@keyframes balloonFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
@@ -131,4 +420,31 @@
   flex: 1;
   width: 100%;
   min-height: 0;
+}
+
+/* Для всех браузеров — Firefox */
+.ymaps-2-1-79-balloon__content {
+  scrollbar-width: thin !important;
+  scrollbar-color: #94a3b8 #eef2ff !important;
+}
+
+/* Для WebKit (Chrome, Edge, Safari) — округление */
+.ymaps-2-1-79-balloon__content::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.ymaps-2-1-79-balloon__content::-webkit-scrollbar-track,
+.ymaps-2-1-79-balloon__content::-webkit-scrollbar-track-piece {
+  background: #eef2ff !important;
+  border-radius: 10px !important;
+}
+
+.ymaps-2-1-79-balloon__content::-webkit-scrollbar-thumb {
+  background: #94a3b8 !important;
+  border-radius: 10px !important;
+}
+
+.ymaps-2-1-79-balloon__content::-webkit-scrollbar-thumb:hover {
+  background: #64748b !important;
 }
