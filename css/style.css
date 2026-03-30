@@ -1,0 +1,300 @@
+
+
+/* ===== 3D карточки ===== */
+.card-3d {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  height: auto;
+  perspective: 1000px;
+}
+
+@media (min-width: 768px) {
+  .card-3d {
+    aspect-ratio: unset;
+    height: 350px;
+  }
+}
+
+.card-3d-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.7s;
+  transform-style: preserve-3d;
+}
+
+/* Десктоп: flip по hover */
+@media (hover: hover) {
+  .group:hover .card-3d-inner {
+    transform: rotateY(180deg);
+  }
+}
+
+.card-3d-front,
+.card-3d-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.5rem;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  backface-visibility: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+}
+
+.card-3d-front {
+  background-color: white;
+}
+
+.card-3d-back {
+  background: linear-gradient(145deg, #1f2937, #111827);
+  color: white;
+  transform: rotateY(180deg);
+  justify-content: space-between;
+}
+
+/* Контейнер видео — резиновый, занимает всё свободное место */
+.video-container {
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.video-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sedlarka {
+  width: 600px;
+  height: 600px;
+}
+
+video {
+  pointer-events: none;
+}
+
+button, a {
+  transition: all 0.2s ease;
+}
+
+.nav-link.active {
+  color: #000;
+  font-weight: 600;
+  position: relative;
+}
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #2563eb;
+  border-radius: 999px;
+}
+
+input:focus {
+  outline: none;
+  ring: 2px solid #3b82f6;
+}
+
+/* ===== Личный кабинет (добавлено из lkabinet.html) ===== */
+* {
+  font-family: 'Manrope', sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: #fff;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 40;
+  transition: transform 0.3s ease;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-radius: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.18s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+.sidebar-link:hover { background: #f5f7ff; color: #1d4ed8; }
+.sidebar-link.active { background: #eff6ff; color: #2563eb; font-weight: 700; }
+.sidebar-link .icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  background: #f3f4f6;
+  transition: background 0.18s;
+  flex-shrink: 0;
+}
+.sidebar-link.active .icon { background: #dbeafe; }
+.sidebar-link:hover .icon { background: #dbeafe; }
+
+/* Main content */
+.main-content {
+  margin-left: 260px;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* Stat card */
+.stat-card {
+  background: #fff;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.stat-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.09); transform: translateY(-2px); }
+
+/* Chart bar */
+.bar-wrap { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+.bar {
+  flex: 1; border-radius: 6px 6px 0 0;
+  background: #dbeafe;
+  transition: background 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+.bar:hover { background: #2563eb; }
+.bar.active-bar { background: #2563eb; }
+
+/* Badge */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 600;
+}
+.badge-green  { background: #dcfce7; color: #15803d; }
+.badge-yellow { background: #fef9c3; color: #a16207; }
+.badge-red    { background: #fee2e2; color: #b91c1c; }
+.badge-blue   { background: #dbeafe; color: #1d4ed8; }
+
+/* Campaign row */
+.campaign-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 80px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s;
+  gap: 12px;
+}
+.campaign-row:hover { background: #f8fafc; }
+.campaign-row:last-child { border-bottom: none; }
+
+/* Toggle */
+.toggle {
+  width: 40px; height: 22px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: #2563eb; }
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on::after { left: 21px; }
+
+/* Mobile sidebar overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 39;
+  backdrop-filter: blur(2px);
+}
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .main-content { margin-left: 0; }
+}
+
+/* Page fade-in */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.4s ease both; }
+.fade-up-1 { animation-delay: 0.05s; }
+.fade-up-2 { animation-delay: 0.12s; }
+.fade-up-3 { animation-delay: 0.19s; }
+.fade-up-4 { animation-delay: 0.26s; }
+.fade-up-5 { animation-delay: 0.33s; }
+
+/* Balance block */
+.balance-card {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 60%, #3b82f6 100%);
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.balance-card::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+.balance-card::after {
+  content: '';
+  position: absolute;
+  bottom: -60px; right: 30px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+
+/* ===== Модальное окно регистрации ===== */
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.93) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-modal { animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* Класс для отображения модалки (flex) */
+#registerModal.flex { display: flex; }
+
+/* Стили для strength bar (если ещё не были добавлены) */
+.strength-bar {
+  transition: background-color 0.3s;
+}

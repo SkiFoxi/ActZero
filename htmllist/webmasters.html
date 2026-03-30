@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ActZero — Веб-мастерам</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-white">
+
+    <header class="px-4 md:px-8 py-4 flex items-center justify-between max-w-[1440px] mx-auto">
+    <div class="text-xl md:text-2xl font-bold">ActZero</div>
+    <nav class="hidden md:flex items-center gap-8">
+        <a href="/index.html"                class="nav-link text-gray-700 hover:text-black">О нас</a>
+        <a href="/htmllist/individuals.html" class="nav-link text-gray-700 hover:text-black">Частным лицам</a>
+        <a href="/htmllist/business.html"    class="nav-link text-gray-700 hover:text-black">Бизнесу</a>
+        <a href="/htmllist/webmasters.html"  class="nav-link text-gray-700 hover:text-black">Веб-мастерам</a>
+        <a href="/htmllist/lkabinet.html"    class="nav-link text-gray-700 hover:text-black">Личный кабинет</a>
+        <button onclick="openModal()" class="px-6 py-3 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+        Перейти в кабинет
+        </button>
+    </nav>
+    <button class="md:hidden p-2 text-2xl">☰</button>
+    </header>
+
+  <main class="max-w-[1440px] mx-auto px-4 md:px-8 py-12 md:py-20">
+    <!-- Контент для веб-мастеров -->
+  </main>
+
+  <footer class="px-4 md:px-8 py-12 md:py-20 bg-gray-50">
+    <div class="max-w-[1440px] mx-auto">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 md:gap-0">
+        <div class="w-full md:w-auto">
+          <h3 class="text-xl md:text-2xl font-bold mb-4">Подпишитесь на новости</h3>
+          <p class="text-gray-600 mb-6">Узнавайте первыми о новых возможностях и акциях</p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <input type="email" placeholder="Ваш email" class="px-6 py-3 rounded-full border border-gray-300 w-full sm:w-80 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button class="px-8 py-3 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors whitespace-nowrap">Подписаться</button>
+          </div>
+        </div>
+        <div>
+          <button class="px-8 py-3 rounded-full bg-black text-white font-medium hover:bg-gray-800 transition-colors w-full md:w-auto">Скачать приложение</button>
+        </div>
+      </div>
+      <div class="mt-12 md:mt-16 pt-6 md:pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between gap-4 text-sm text-gray-600">
+        <div>© 2026 ActZero</div>
+        <div class="flex flex-col sm:flex-row gap-4 md:gap-8">
+          <a href="#" class="hover:text-black">Условия использования</a>
+          <a href="#" class="hover:text-black">Политика конфиденциальности</a>
+          <a href="#" class="hover:text-black">Поддержка</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Модальное окно и тост (точно такие же) -->
+  <div id="registerModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div id="modalBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10 z-10 animate-modal">
+      <button id="closeModal" class="absolute top-5 right-5 w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-black transition-colors text-lg font-bold">✕</button>
+      <div class="mb-8 text-center">
+        <div class="text-2xl font-bold mb-1">ActZero</div>
+        <h2 class="text-2xl md:text-3xl font-bold mt-3 mb-2">Создать аккаунт</h2>
+        <p class="text-gray-500 text-sm">Начните привлекать клиентов уже сегодня</p>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Имя</label>
+          <input type="text" id="regName" placeholder="Иван Иванов" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm bg-gray-50 focus:bg-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+          <input type="email" id="regEmail" placeholder="email@example.com" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm bg-gray-50 focus:bg-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Телефон</label>
+          <input type="tel" id="regPhone" placeholder="+7 (999) 000-00-00" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm bg-gray-50 focus:bg-white">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
+          <div class="relative">
+            <input type="password" id="regPassword" placeholder="Минимум 8 символов" class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm bg-gray-50 focus:bg-white pr-12">
+            <button id="togglePassword" type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors text-base">👁</button>
+          </div>
+          <div class="mt-2 flex gap-1">
+            <div class="h-1 flex-1 rounded-full bg-gray-200 strength-bar" id="bar1"></div>
+            <div class="h-1 flex-1 rounded-full bg-gray-200 strength-bar" id="bar2"></div>
+            <div class="h-1 flex-1 rounded-full bg-gray-200 strength-bar" id="bar3"></div>
+            <div class="h-1 flex-1 rounded-full bg-gray-200 strength-bar" id="bar4"></div>
+          </div>
+          <p id="strengthLabel" class="text-xs text-gray-400 mt-1"></p>
+        </div>
+        <div class="flex items-start gap-3 pt-1">
+          <input type="checkbox" id="regAgree" class="mt-0.5 w-4 h-4 rounded accent-blue-600 cursor-pointer">
+          <label for="regAgree" class="text-xs text-gray-500 leading-relaxed cursor-pointer">
+            Я принимаю <a href="#" class="text-blue-600 hover:underline">условия использования</a> и <a href="#" class="text-blue-600 hover:underline">политику конфиденциальности</a>
+          </label>
+        </div>
+        <button id="submitRegister" class="w-full py-3.5 rounded-2xl bg-blue-600 text-white font-semibold hover:bg-blue-700 active:scale-95 transition-all text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          Зарегистрироваться
+        </button>
+        <div class="flex items-center gap-3 my-1">
+          <div class="flex-1 h-px bg-gray-200"></div>
+          <span class="text-xs text-gray-400">или</span>
+          <div class="flex-1 h-px bg-gray-200"></div>
+        </div>
+        <p class="text-center text-sm text-gray-500">
+          Уже есть аккаунт?
+          <a href="#" class="text-blue-600 font-medium hover:underline ml-1">Войти</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="successToast" class="fixed bottom-6 right-6 z-[60] hidden">
+    <div class="bg-green-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 font-medium text-sm">
+      <span class="text-xl">✅</span> Аккаунт успешно создан!
+    </div>
+  </div>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>
