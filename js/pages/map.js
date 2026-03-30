@@ -18,7 +18,9 @@ const locationsData = {
         "interests": ["food", "technology"],
         "population_density": 5000
       },
-      "score": 0.95
+      "score": 0.95,
+      "image": "/video/Ai_image.png",   // <-- добавлено // Изображение для метки
+      "balloon_image": "/video/kaisa_1.png"  // Изображение для внутреннего описания метки
     },
     {
       "id": "loc_2",
@@ -37,7 +39,9 @@ const locationsData = {
         "interests": ["shopping", "food"],
         "population_density": 7000
       },
-      "score": 0.88
+      "score": 0.88,
+      "image": "/video/Ai_image.png",   // <-- добавлено // Изображение для метки
+      "balloon_image": "/video/kaisa_1.png"  // Изображение для внутреннего описания метки
     }
   ],
   "total": 2
@@ -84,50 +88,60 @@ function initMap() {
 
   // Функция для добавления отдельных меток
   function showIndividualMarkers() {
-    // Удаляем кластер метку если есть
-    if (clusterMarker) {
-      map.geoObjects.remove(clusterMarker);
-      clusterMarker = null;
-    }
-
-    // Добавляем отдельные метки
-    locationsData.locations.forEach((location, index) => {
-      if (markers[index]) return; // Уже добавлена
-
-      const coords = [location.coordinates.lat, location.coordinates.lon];
-
-      const balloonContent = `
-        <div style="max-width: 280px;">
-          <b>${location.name}</b><br>
-          <strong>Адрес:</strong> ${location.address}<br>
-          <strong>Описание:</strong> ${location.description}<br>
-          <strong>Подходит для:</strong> ${location.business_types_suitable.join(', ')}<br>
-          <strong>Трафик:</strong> ${location.traffic_score}/10<br>
-          <strong>Конкуренция:</strong> ${location.competition_density}<br>
-          <strong>Возрастная группа:</strong> ${location.demographics.age_group}<br>
-          <strong>Средний доход:</strong> ${location.demographics.average_income} ₽<br>
-          <strong>Рейтинг:</strong> ${location.score}
-        </div>
-      `;
-
-      const placemark = new ymaps.Placemark(
-        coords,
-        {
-          balloonContent: balloonContent,
-          hintContent: location.name,
-          iconCaption: (index + 1).toString()
-        },
-        {
-          preset: "islands#blueCircleIcon"
-        }
-      );
-
-      map.geoObjects.add(placemark);
-      markers[index] = placemark;
-    });
-
-    markersVisible = true;
+  // Удаляем кластер метку если есть
+  if (clusterMarker) {
+    map.geoObjects.remove(clusterMarker);
+    clusterMarker = null;
   }
+
+  // Добавляем отдельные метки
+  locationsData.locations.forEach((location, index) => {
+    if (markers[index]) return; // Уже добавлена
+
+    const coords = [location.coordinates.lat, location.coordinates.lon];
+
+    const balloonContent = `
+      <div style="max-width: 280px;">
+        ${location.balloon_image ? `<img src="${location.balloon_image}" style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; margin-bottom:8px;">` : ''}
+        <b>${location.name}</b><br>
+        <strong>Адрес:</strong> ${location.address}<br>
+        <strong>Описание:</strong> ${location.description}<br>
+        <strong>Подходит для:</strong> ${location.business_types_suitable.join(', ')}<br>
+        <strong>Трафик:</strong> ${location.traffic_score}/10<br>
+        <strong>Конкуренция:</strong> ${location.competition_density}<br>
+        <strong>Возрастная группа:</strong> ${location.demographics.age_group}<br>
+        <strong>Средний доход:</strong> ${location.demographics.average_income} ₽<br>
+        <strong>Рейтинг:</strong> ${location.score}
+      </div>
+    `;
+
+    // Путь к изображению: если указано, берём его, иначе дефолтное
+    const image = location.image ? location.image : '/video/Ai_image.png';          // Изображение для метки 
+
+    const placemark = new ymaps.Placemark(
+      coords,
+      {
+        balloonContent: balloonContent,
+        hintContent: location.name,
+        iconCaption: (index + 1).toString()
+      },
+      {
+        // Используем макет "изображение"
+        iconLayout: 'default#image',
+        iconImageHref: image,
+        // Размер иконки (ширина, высота) – подберите под свои изображения
+        iconImageSize: [40, 40],
+        // Смещение, чтобы остриё иконки указывало на координату
+        iconImageOffset: [-20, -40]
+      }
+    );
+
+    map.geoObjects.add(placemark);
+    markers[index] = placemark;
+  });
+
+  markersVisible = true;
+}
 
   // Функция для показа кластер метки
   function showClusterMarker() {
