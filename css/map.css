@@ -386,3 +386,101 @@
 .ymaps-2-1-79-balloon__content::-webkit-scrollbar-thumb:hover {
   background: #64748b !important;
 }
+
+/* ===== МЕНЮ ВЫБОРА ГОРОДА ===== */
+.city-selector-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  font-family: 'Manrope', sans-serif;
+}
+
+.city-selector-toggle {
+  background: white;
+  border: none;
+  border-radius: 40px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  backdrop-filter: blur(4px);
+}
+
+.city-selector-toggle:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.city-selector-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+  padding: 8px 0;
+  display: none;
+  flex-direction: column;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  animation: fadeInScale 0.2s ease-out;
+}
+
+.city-selector-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.city-selector-panel li {
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.15s;
+  border-radius: 12px;
+  margin: 2px 8px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.city-selector-panel li:hover {
+  background: #f1f5f9;
+  color: #1e40af;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+  .city-selector-container {
+    top: 70px;
+    right: 12px;
+  }
+  .city-selector-toggle {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  .city-selector-panel {
+    min-width: 160px;
+  }
+}

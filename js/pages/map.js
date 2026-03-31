@@ -19,8 +19,8 @@ const locationsData = {
         population_density: 5000,
       },
       score: 0.95,
-      image: '/video/Ai_image.png',                                                                              //Иконка метки
-      images: ['/video/Ai_image.png', '/video/kaisa_1.png', 'https://via.placeholder.com/300x200?text=Image+3'], //Изображение заведения
+      image: '/video/Ai_image.png',
+      images: ['/video/Ai_image.png', '/video/kaisa_1.png', 'https://via.placeholder.com/300x200?text=Image+3'],
     },
     {
       id: 'loc_2',
@@ -40,8 +40,8 @@ const locationsData = {
         population_density: 7000,
       },
       score: 0.88,
-      image: '/video/Ai_image.png',                                                                                     //Иконка метки
-      images: ['/video/kaisa_1.png', '/video/Ai_image.png', 'https://via.placeholder.com/300x200?text=Additional'],     //Изображение заведения
+      image: '/video/Ai_image.png',
+      images: ['/video/kaisa_1.png', '/video/Ai_image.png', 'https://via.placeholder.com/300x200?text=Additional'],
     },
   ],
   total: 2,
@@ -65,7 +65,6 @@ let currentBalloonPlacemark = null;
 
 // ========== ФУНКЦИЯ ПОКАЗА ПАНОРАМЫ ==========
 function showPanorama(lat, lon, locationName, locationAddress) {
-  // Проверяем поддержку панорам
   if (!ymaps.panorama || !ymaps.panorama.isSupported()) {
     alert('Ваш браузер не поддерживает панорамы.');
     return;
@@ -144,7 +143,6 @@ function showPanorama(lat, lon, locationName, locationAddress) {
     }
   }
 
-  // Показываем индикатор загрузки
   panoramaContainer.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка панорамы...</div>';
   if (closeBtn) panoramaContainer.appendChild(closeBtn);
 
@@ -155,17 +153,15 @@ function showPanorama(lat, lon, locationName, locationAddress) {
         if (closeBtn) panoramaContainer.appendChild(closeBtn);
         return;
       }
-      
-      // Создаём плеер с отключёнными элементами управления
+
       const player = new ymaps.panorama.Player(panoramaContainer, panoramas[0], {
         direction: [0, -50],
         zoom: 1,
-        controls: [] // Отключаем все элементы управления
+        controls: []
       });
-      
-      // Добавляем "парящую" метку
+
+      // Добавляем плавающую метку (фиксированная на экране, не в 3D)
       setTimeout(() => {
-        // Создаём плавающий блок метки
         const floatingMarker = document.createElement('div');
         floatingMarker.style.cssText = `
           position: absolute;
@@ -187,8 +183,7 @@ function showPanorama(lat, lon, locationName, locationAddress) {
           border: 1px solid rgba(255,255,255,0.2);
           animation: floatMarker 3s ease-in-out infinite;
         `;
-        
-        // Добавляем анимацию парения
+
         const style = document.createElement('style');
         style.textContent = `
           @keyframes floatMarker {
@@ -197,7 +192,7 @@ function showPanorama(lat, lon, locationName, locationAddress) {
           }
         `;
         document.head.appendChild(style);
-        
+
         floatingMarker.onmouseenter = () => {
           floatingMarker.style.transform = 'scale(1.05)';
           floatingMarker.style.background = 'rgba(0, 0, 0, 0.85)';
@@ -209,26 +204,21 @@ function showPanorama(lat, lon, locationName, locationAddress) {
         floatingMarker.onclick = () => {
           panoramaContainer.remove();
         };
-        
-        // Иконка метки
+
         const iconImg = document.createElement('img');
         iconImg.src = '/video/Ai_image.png';
         iconImg.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.2);';
-        
-        // Текстовый блок
+
         const textDiv = document.createElement('div');
         textDiv.innerHTML = `
           <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px;">${locationName}</div>
           <div style="font-size: 11px; opacity: 0.85;">${locationAddress}</div>
         `;
-        
+
         floatingMarker.appendChild(iconImg);
         floatingMarker.appendChild(textDiv);
-        
-        // Добавляем в контейнер панорамы
         panoramaContainer.appendChild(floatingMarker);
-        
-        // Убеждаемся, что кнопка закрытия сверху
+
         if (closeBtn && !panoramaContainer.contains(closeBtn)) {
           panoramaContainer.appendChild(closeBtn);
         }
@@ -381,7 +371,6 @@ function openBalloonWithDelay(placemark, location) {
     openTimer = null;
   }
 
-  // Если уже открыт другой балун, закрываем его
   if (currentBalloonPlacemark && currentBalloonPlacemark !== placemark && currentBalloonPlacemark.balloon.isOpen()) {
     currentBalloonPlacemark.balloon.close();
   }
@@ -401,7 +390,6 @@ function openBalloonWithDelay(placemark, location) {
       if (balloonElement && placemark.userData) {
         initCarousel(balloonElement, placemark.userData);
 
-        // Обработчики для удержания балуна при наведении
         const onBalloonMouseEnter = () => {
           if (closeTimer) {
             clearTimeout(closeTimer);
@@ -419,6 +407,242 @@ function openBalloonWithDelay(placemark, location) {
   }, 300);
 }
 
+// ========== МЕНЮ ВЫБОРА ГОРОДА С ПОИСКОМ ==========
+function setupCitySelector(map) {
+  // Контейнер меню
+  const selectorContainer = document.createElement('div');
+  selectorContainer.className = 'city-selector-container';
+
+  // Кнопка-переключатель
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'city-selector-toggle';
+  toggleBtn.innerHTML = '🌍 Города';
+  toggleBtn.title = 'Выбрать город';
+
+  // Панель
+  const panel = document.createElement('div');
+  panel.className = 'city-selector-panel';
+  panel.style.display = 'none';
+
+  // Поле ввода и кнопка
+  const searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.placeholder = 'Введите название города...';
+  searchInput.className = 'city-search-input';
+
+  const searchBtn = document.createElement('button');
+  searchBtn.textContent = 'Найти';
+  searchBtn.className = 'city-search-btn';
+
+  // Контейнер для подсказок
+  const suggestionsContainer = document.createElement('div');
+  suggestionsContainer.className = 'city-suggestions';
+
+  // Контейнер для истории
+  const historyTitle = document.createElement('div');
+  historyTitle.className = 'city-history-title';
+  historyTitle.textContent = 'Недавние города';
+  const historyList = document.createElement('ul');
+  historyList.className = 'city-results-list';
+
+  // Сообщения об ошибках
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'city-message';
+  messageDiv.style.display = 'none';
+
+  // Сборка панели
+  panel.appendChild(searchInput);
+  panel.appendChild(suggestionsContainer);
+  panel.appendChild(searchBtn);
+  panel.appendChild(messageDiv);
+  panel.appendChild(historyTitle);
+  panel.appendChild(historyList);
+
+  selectorContainer.appendChild(toggleBtn);
+  selectorContainer.appendChild(panel);
+  document.body.appendChild(selectorContainer);
+
+  // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+
+  let debounceTimer = null;
+
+  // Поиск города (вызывается при клике на кнопку или выборе подсказки)
+  async function searchCity(query) {
+    if (!query.trim()) return;
+
+    searchBtn.disabled = true;
+    searchBtn.textContent = 'Поиск...';
+    messageDiv.style.display = 'none';
+    suggestionsContainer.style.display = 'none';
+
+    try {
+      const res = await ymaps.geocode(query, { results: 1 });
+      const firstGeo = res.geoObjects.get(0);
+      if (!firstGeo) {
+        messageDiv.textContent = 'Город не найден. Попробуйте уточнить название.';
+        messageDiv.style.display = 'block';
+        return;
+      }
+
+      const coords = firstGeo.geometry.getCoordinates();
+      const name = firstGeo.getAddressLine() || query;
+
+      addToHistory(name, coords);
+      map.setCenter(coords, 12);
+      panel.style.display = 'none';
+    } catch (err) {
+      console.error(err);
+      messageDiv.textContent = 'Ошибка при поиске. Попробуйте позже.';
+      messageDiv.style.display = 'block';
+    } finally {
+      searchBtn.disabled = false;
+      searchBtn.textContent = 'Найти';
+    }
+  }
+
+  // Сохранение истории (максимум 3 записи)
+  function addToHistory(name, coords) {
+    let history = JSON.parse(localStorage.getItem('citySearchHistory') || '[]');
+    history = history.filter(item => item.name !== name);
+    history.unshift({ name, coords, timestamp: Date.now() });
+    history = history.slice(0, 3);
+    localStorage.setItem('citySearchHistory', JSON.stringify(history));
+    renderHistory();
+  }
+
+  // Отображение истории
+  function renderHistory() {
+    const history = JSON.parse(localStorage.getItem('citySearchHistory') || '[]');
+    historyList.innerHTML = '';
+    if (history.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'Нет недавних городов';
+      li.className = 'empty-history';
+      historyList.appendChild(li);
+      return;
+    }
+    history.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item.name;
+      li.addEventListener('click', () => {
+        map.setCenter(item.coords, 12);
+        panel.style.display = 'none';
+      });
+      historyList.appendChild(li);
+    });
+  }
+
+  // Загрузка подсказок – предпочтительно suggest, fallback геокодер
+  async function loadSuggestions(query) {
+    if (!query.trim() || query.length < 2) {
+      suggestionsContainer.style.display = 'none';
+      return;
+    }
+
+    try {
+      let items = [];
+      // Пытаемся использовать suggest, если он доступен
+      if (typeof ymaps.suggest === 'function') {
+        try {
+          const suggestResult = await ymaps.suggest(query);
+          items = suggestResult.map(item => ({
+            displayName: item.displayName,
+            value: item.value
+          }));
+        } catch (err) {
+          console.warn('ymaps.suggest недоступен, используем геокодер', err);
+          // fallback на геокодер
+          const geoRes = await ymaps.geocode(query, { results: 5 });
+          geoRes.geoObjects.each(obj => {
+            const name = obj.getAddressLine();
+            if (name) items.push({ displayName: name, value: name });
+          });
+        }
+      } else {
+        // suggest нет, используем геокодер
+        const geoRes = await ymaps.geocode(query, { results: 5 });
+        geoRes.geoObjects.each(obj => {
+          const name = obj.getAddressLine();
+          if (name) items.push({ displayName: name, value: name });
+        });
+      }
+
+      if (items.length === 0) {
+        suggestionsContainer.style.display = 'none';
+        return;
+      }
+
+      suggestionsContainer.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'city-suggestion-item';
+        div.textContent = item.displayName;
+        div.addEventListener('click', () => {
+          searchInput.value = item.displayName;
+          suggestionsContainer.style.display = 'none';
+          searchCity(item.displayName);
+        });
+        suggestionsContainer.appendChild(div);
+      });
+      suggestionsContainer.style.display = 'block';
+    } catch (err) {
+      console.error('Ошибка загрузки подсказок:', err);
+      suggestionsContainer.style.display = 'none';
+    }
+  }
+
+  // Обработчик ввода с debounce
+  function onInputChange(e) {
+    const val = e.target.value;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      loadSuggestions(val);
+    }, 300);
+  }
+
+  // ========== ПОДКЛЮЧЕНИЕ ОБРАБОТЧИКОВ ==========
+
+  searchBtn.addEventListener('click', () => {
+    searchCity(searchInput.value);
+  });
+
+  searchInput.addEventListener('input', onInputChange);
+  searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      searchCity(searchInput.value);
+    }
+  });
+
+  // Закрытие подсказок при потере фокуса
+  searchInput.addEventListener('blur', () => {
+    setTimeout(() => {
+      suggestionsContainer.style.display = 'none';
+    }, 200);
+  });
+
+  // Открытие/закрытие панели
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isVisible = panel.style.display === 'flex';
+    panel.style.display = isVisible ? 'none' : 'flex';
+    if (!isVisible) {
+      searchInput.focus();
+      renderHistory();
+      suggestionsContainer.style.display = 'none';
+    }
+  });
+
+  // Закрытие при клике вне меню
+  document.addEventListener('click', (e) => {
+    if (!selectorContainer.contains(e.target)) {
+      panel.style.display = 'none';
+    }
+  });
+
+  // Инициализация
+  renderHistory();
+}
+
 // ========== MAP INITIALIZATION ==========
 function initMap() {
   const firstLocation = locationsData.locations[0];
@@ -431,13 +655,15 @@ function initMap() {
     balloonAutoPan: false,
   });
 
+  // Сохраняем карту глобально для использования в других функциях
+  window.map = map;
+
   let markersVisible = true;
   let markers = [];
   let clusterMarker = null;
 
   function getClusterCenter() {
-    let avgLat = 0,
-      avgLon = 0;
+    let avgLat = 0, avgLon = 0;
     locationsData.locations.forEach((loc) => {
       avgLat += loc.coordinates.lat;
       avgLon += loc.coordinates.lon;
@@ -470,7 +696,7 @@ function initMap() {
           iconImageOffset: [-20, -40],
           openBalloonOnClick: false,
           hideIconOnBalloonOpen: false,
-          balloonOffset: [-100, -27], // центрирование над меткой, смещение вверх
+          balloonOffset: [-100, -27],
         }
       );
 
@@ -496,7 +722,6 @@ function initMap() {
   }
 
   function showClusterMarker() {
-    // Удаляем старые отдельные метки
     markers.forEach((marker) => {
       if (marker) {
         map.geoObjects.remove(marker);
@@ -515,24 +740,22 @@ function initMap() {
       </div>
     `;
 
-    // Используем ту же картинку, что и у отдельных меток, но увеличенную
-    const clusterImage = '/video/Ai_image.png';                                                // можно заменить на специальную иконку кластера
+    const clusterImage = '/video/Ai_image.png';
     const clusterSize = [60, 60];
-    const clusterOffset = [-30, -60]; // смещение, чтобы «хвостик» указывал на точку привязки
+    const clusterOffset = [-30, -60];
 
     clusterMarker = new ymaps.Placemark(
       center,
       {
         balloonContent: balloonContent,
         hintContent: `Локации (${count})`,
-        iconContent: count.toString(), // число будет отображаться поверх картинки
+        iconContent: count.toString(),
       },
       {
         iconLayout: 'default#imageWithContent',
         iconImageHref: clusterImage,
         iconImageSize: clusterSize,
         iconImageOffset: clusterOffset,
-        // Настройки для текста
         iconContentOffset: [0, 0],
         iconContentSize: clusterSize,
         iconContentPadding: [0, 0, 0, 0],
@@ -607,6 +830,9 @@ function initMap() {
       delete balloonElement._carouselHandlers;
     }
   });
+
+  // Добавляем меню выбора города с поиском
+  setupCitySelector(map);
 
   return map;
 }
