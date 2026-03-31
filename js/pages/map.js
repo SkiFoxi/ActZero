@@ -1,3 +1,6 @@
+// ========== ГЛОБАЛЬНЫЕ НАСТРОЙКИ ==========
+const DEFAULT_MARKER_IMAGE = '/video/Ai_image.png';
+
 // ========== ДАННЫЕ ЛОКАЦИЙ ==========
 const locationsData = {
   locations: [
@@ -19,7 +22,7 @@ const locationsData = {
         population_density: 5000,
       },
       score: 0.95,
-      image: '/video/Ai_image.png',
+      // image можно не указывать — будет использован DEFAULT_MARKER_IMAGE
       images: ['/video/Ai_image.png', '/video/kaisa_1.png', 'https://via.placeholder.com/300x200?text=Image+3'],
     },
     {
@@ -40,7 +43,26 @@ const locationsData = {
         population_density: 7000,
       },
       score: 0.88,
-      image: '/video/Ai_image.png',
+      images: ['/video/kaisa_1.png', '/video/Ai_image.png', 'https://via.placeholder.com/300x200?text=Additional'],
+    },
+    {
+      id: 'loc_2',
+      name: 'Локация 2',
+      address: 'ул. Тверская, д. 5, Тамбов',
+      coordinates: { lat: 52.7212, lon: 41.4529 },
+      region: 'Тамбов',
+      city: 'Тамбов',
+      description: 'Оживлённое место',
+      business_types_suitable: ['shop', 'cafe'],
+      traffic_score: 7.0,
+      competition_density: 4.1,
+      demographics: {
+        age_group: '18-35',
+        average_income: 80000,
+        interests: ['shopping', 'food'],
+        population_density: 7000,
+      },
+      score: 0.88,
       images: ['/video/kaisa_1.png', '/video/Ai_image.png', 'https://via.placeholder.com/300x200?text=Additional'],
     },
   ],
@@ -206,7 +228,7 @@ function showPanorama(lat, lon, locationName, locationAddress) {
         };
 
         const iconImg = document.createElement('img');
-        iconImg.src = '/video/Ai_image.png';
+        iconImg.src = DEFAULT_MARKER_IMAGE;
         iconImg.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.2);';
 
         const textDiv = document.createElement('div');
@@ -313,7 +335,7 @@ function generateBalloonContent(location, currentIndex = 0) {
   `;
 }
 
-// ========== ИНИЦИАЛИЗАЦИЯ КАРУСЕЛИ ==========
+// ========== ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ КАРУСЕЛИ ==========
 function initCarousel(balloonElement, location) {
   const images = location.images || [];
   if (images.length <= 1) return;
@@ -639,7 +661,7 @@ function setupCitySelector(map) {
   renderHistory();
 }
 
-// ========== MAP INITIALIZATION ==========
+// ========== ИНИЦИАЛИЗАЦИЯ КАРТЫ С КЛАСТЕРИЗАЦИЕЙ ==========
 function initMap() {
   const firstLocation = locationsData.locations[0];
   const center = firstLocation ? [firstLocation.coordinates.lat, firstLocation.coordinates.lon] : [55.7558, 37.6173];
@@ -654,30 +676,21 @@ function initMap() {
   // Сохраняем карту глобально для использования в других функциях
   window.map = map;
 
-  let markersVisible = true;
-  let markers = [];
-  let clusterMarker = null;
-
-  function getClusterCenter() {
-    let avgLat = 0, avgLon = 0;
-    locationsData.locations.forEach((loc) => {
-      avgLat += loc.coordinates.lat;
-      avgLon += loc.coordinates.lon;
-    });
-    return [avgLat / locationsData.locations.length, avgLon / locationsData.locations.length];
-  }
-
-function showIndividualMarkers() {
-  if (clusterMarker) {
-    map.geoObjects.remove(clusterMarker);
-    clusterMarker = null;
-  }
+  // Создаем кластеризатор с увеличенным gridSize для более раннего слияния
+  const clusterer = new ymaps.Clusterer({
+    gridSize: 100,               // увеличенный размер сетки → кластеры появляются раньше
+    preset: 'islands#blueClusterIcons',
+    clusterDisableClickZoom: false,
+    clusterOpenBalloonOnClick: false,
+    minClusterSize: 2,
+  });
 
   // Подготавливаем данные для маркеров: загружаем изображения и создаём синие версии
   const markerData = [];
   const loadPromises = locationsData.locations.map((location, idx) => {
     return new Promise((resolve) => {
-      const originalUrl = location.image ? location.image : '/video/Ai_image.png';
+      // Используем изображение локации или глобальное по умолчанию
+      const originalUrl = (location.image && location.image.trim() !== '') ? location.image : DEFAULT_MARKER_IMAGE;
       const img = new Image();
       img.crossOrigin = 'Anonymous';
       img.onload = () => {
@@ -720,8 +733,10 @@ function showIndividualMarkers() {
     });
   });
 
-  // После загрузки всех изображений создаём маркеры
+  // После загрузки всех изображений создаём маркеры и добавляем в кластеризатор
   Promise.all(loadPromises).then(() => {
+    const placemarks = [];
+
     markerData.forEach((data, index) => {
       const location = data.location;
       const originalImage = data.originalUrl;
@@ -767,91 +782,23 @@ function showIndividualMarkers() {
         scheduleCloseBalloon(placemark);
       });
 
-      map.geoObjects.add(placemark);
-      markers[index] = placemark;
+      placemarks.push(placemark);
     });
+
+    // Добавляем все маркеры в кластеризатор
+    clusterer.add(placemarks);
+    // Добавляем кластеризатор на карту
+    map.geoObjects.add(clusterer);
   });
 
-  markersVisible = true;
-}
-
-  function showClusterMarker() {
-    markers.forEach((marker) => {
-      if (marker) {
-        map.geoObjects.remove(marker);
-      }
-    });
-    markers = [];
-
-    const center = getClusterCenter();
-    const count = locationsData.locations.length;
-
-    const balloonContent = `
-      <div style="text-align: center; max-width: 280px;">
-        <b>Локации</b><br>
-        Всего: ${count}<br>
-        <small>Приближайте карту для подробностей</small>
-      </div>
-    `;
-
-    const clusterImage = '/video/Ai_image.png';
-    const clusterSize = [60, 60];
-    const clusterOffset = [-30, -60];
-
-    clusterMarker = new ymaps.Placemark(
-      center,
-      {
-        balloonContent: balloonContent,
-        hintContent: `Локации (${count})`,
-        iconContent: count.toString(),
-      },
-      {
-        iconLayout: 'default#imageWithContent',
-        iconImageHref: clusterImage,
-        iconImageSize: clusterSize,
-        iconImageOffset: clusterOffset,
-        iconContentOffset: [0, 0],
-        iconContentSize: clusterSize,
-        iconContentPadding: [0, 0, 0, 0],
-        iconContentStyle: {
-          fontSize: '20px',
-          fontWeight: 'bold',
-          color: '#ffffff',
-          textAlign: 'center',
-          lineHeight: `${clusterSize[1]}px`,
-          textShadow: '0 0 4px rgba(0,0,0,0.7)',
-        },
-        openBalloonOnClick: true,
-      }
-    );
-
-    map.geoObjects.add(clusterMarker);
-    markersVisible = false;
-  }
-
-  map.events.add('boundschange', () => {
-    const zoom = map.getZoom();
-    if (zoom < 14 && markersVisible) {
-      showClusterMarker();
-    } else if (zoom >= 14 && !markersVisible) {
-      showIndividualMarkers();
-    }
-  });
-
-  map.events.add('click', () => {
-    if (currentBalloonPlacemark && currentBalloonPlacemark.balloon.isOpen()) {
-      currentBalloonPlacemark.balloon.close();
-    }
-  });
-
-  showIndividualMarkers();
-
+  // Устанавливаем границы карты по всем точкам
   if (locationsData.locations.length > 1) {
     const allCoords = locationsData.locations.map((loc) => [loc.coordinates.lat, loc.coordinates.lon]);
     const bounds = ymaps.util.bounds.fromPoints(allCoords);
     map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 50 });
   }
 
+  // ResizeObserver для корректного отображения карты при изменении размеров
   const mapContainer = document.getElementById('map');
   const resizeObserver = new ResizeObserver(() => {
     if (locationsData.locations.length > 1) {
@@ -863,6 +810,14 @@ function showIndividualMarkers() {
   });
   resizeObserver.observe(mapContainer);
 
+  // Закрытие балуна при клике на карту
+  map.events.add('click', () => {
+    if (currentBalloonPlacemark && currentBalloonPlacemark.balloon.isOpen()) {
+      currentBalloonPlacemark.balloon.close();
+    }
+  });
+
+  // Очистка таймеров и обработчиков при закрытии балуна
   map.events.add('balloonclose', () => {
     if (closeTimer) {
       clearTimeout(closeTimer);
