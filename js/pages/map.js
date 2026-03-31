@@ -357,7 +357,7 @@ function scheduleCloseBalloon(placemark) {
       placemark.balloon.close();
     }
     closeTimer = null;
-  }, 800);
+  }, 300);
 }
 
 // ========== ОТКРЫТИЕ БАЛУНА С ЗАДЕРЖКОЙ ==========
@@ -667,17 +667,69 @@ function initMap() {
     return [avgLat / locationsData.locations.length, avgLon / locationsData.locations.length];
   }
 
-  function showIndividualMarkers() {
-    if (clusterMarker) {
-      map.geoObjects.remove(clusterMarker);
-      clusterMarker = null;
-    }
+function showIndividualMarkers() {
+  if (clusterMarker) {
+    map.geoObjects.remove(clusterMarker);
+    clusterMarker = null;
+  }
 
-    locationsData.locations.forEach((location, index) => {
-      if (markers[index]) return;
+  // Подготавливаем данные для маркеров: загружаем изображения и создаём синие версии
+  const markerData = [];
+  const loadPromises = locationsData.locations.map((location, idx) => {
+    return new Promise((resolve) => {
+      const originalUrl = location.image ? location.image : '/video/Ai_image.png';
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => {
+        // Создаём синюю версию через canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          let r = data[i];
+          let g = data[i+1];
+          let b = data[i+2];
+          // Преобразуем в синий оттенок (заменяем красный и зелёный на синий)
+          data[i] = b;     // красный = синий
+          data[i+1] = g;   // зелёный оставляем (можно менять)
+          data[i+2] = 150; // синий делаем максимальным для яркости
+        }
+        ctx.putImageData(imageData, 0, 0);
+        const blueUrl = canvas.toDataURL();
+        markerData[idx] = {
+          location: location,
+          originalUrl: originalUrl,
+          blueUrl: blueUrl
+        };
+        resolve();
+      };
+      img.onerror = () => {
+        console.warn('Не удалось загрузить иконку', originalUrl);
+        markerData[idx] = {
+          location: location,
+          originalUrl: originalUrl,
+          blueUrl: originalUrl // в случае ошибки синяя версия = оригинал
+        };
+        resolve();
+      };
+      img.src = originalUrl;
+    });
+  });
+
+  // После загрузки всех изображений создаём маркеры
+  Promise.all(loadPromises).then(() => {
+    markerData.forEach((data, index) => {
+      const location = data.location;
+      const originalImage = data.originalUrl;
+      const blueImage = data.blueUrl;
 
       const coords = [location.coordinates.lat, location.coordinates.lon];
-      const image = location.image ? location.image : '/video/Ai_image.png';
+      const normalSize = [40, 40];
+      const normalOffset = [-20, -40];
 
       const placemark = new ymaps.Placemark(
         coords,
@@ -687,9 +739,9 @@ function initMap() {
         },
         {
           iconLayout: 'default#image',
-          iconImageHref: image,
-          iconImageSize: [40, 40],
-          iconImageOffset: [-20, -40],
+          iconImageHref: originalImage,
+          iconImageSize: normalSize,
+          iconImageOffset: normalOffset,
           openBalloonOnClick: false,
           hideIconOnBalloonOpen: false,
           balloonOffset: [-100, -27],
@@ -697,12 +749,17 @@ function initMap() {
       );
 
       placemark.userData = location;
+      placemark._blueImage = blueImage;
 
       placemark.events.add('mouseenter', () => {
+        // Меняем иконку на синюю
+        placemark.options.set({ iconImageHref: blueImage });
         openBalloonWithDelay(placemark, location);
       });
 
       placemark.events.add('mouseleave', () => {
+        // Возвращаем оригинальную иконку
+        placemark.options.set({ iconImageHref: originalImage });
         if (openTimer) {
           clearTimeout(openTimer);
           openTimer = null;
@@ -713,9 +770,10 @@ function initMap() {
       map.geoObjects.add(placemark);
       markers[index] = placemark;
     });
+  });
 
-    markersVisible = true;
-  }
+  markersVisible = true;
+}
 
   function showClusterMarker() {
     markers.forEach((marker) => {
