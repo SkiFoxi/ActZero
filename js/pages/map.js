@@ -63,6 +63,186 @@ let openTimer = null;
 let closeTimer = null;
 let currentBalloonPlacemark = null;
 
+// ========== ФУНКЦИЯ ПОКАЗА ПАНОРАМЫ ==========
+function showPanorama(lat, lon, locationName, locationAddress) {
+  // Проверяем поддержку панорам
+  if (!ymaps.panorama || !ymaps.panorama.isSupported()) {
+    alert('Ваш браузер не поддерживает панорамы.');
+    return;
+  }
+
+  let panoramaContainer = document.getElementById('panorama-container');
+  let closeBtn = null;
+
+  if (!panoramaContainer) {
+    panoramaContainer = document.createElement('div');
+    panoramaContainer.id = 'panorama-container';
+    panoramaContainer.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      height: 80%;
+      background: #fff;
+      z-index: 1000;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      overflow: hidden;
+    `;
+    document.body.appendChild(panoramaContainer);
+
+    closeBtn = document.createElement('button');
+    closeBtn.innerText = '✕';
+    closeBtn.style.cssText = `
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #fff;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 1001;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      font-weight: bold;
+    `;
+    closeBtn.onclick = () => {
+      panoramaContainer.remove();
+    };
+  } else {
+    closeBtn = panoramaContainer.querySelector('button');
+    if (!closeBtn) {
+      closeBtn = document.createElement('button');
+      closeBtn.innerText = '✕';
+      closeBtn.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #fff;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 1001;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        font-weight: bold;
+      `;
+      closeBtn.onclick = () => {
+        panoramaContainer.remove();
+      };
+    }
+  }
+
+  // Показываем индикатор загрузки
+  panoramaContainer.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка панорамы...</div>';
+  if (closeBtn) panoramaContainer.appendChild(closeBtn);
+
+  ymaps.panorama.locate([lat, lon]).then(
+    function (panoramas) {
+      if (!panoramas.length) {
+        panoramaContainer.innerHTML = '<div style="padding:20px; text-align:center;">Панорама не найдена для этих координат</div>';
+        if (closeBtn) panoramaContainer.appendChild(closeBtn);
+        return;
+      }
+      
+      // Создаём плеер с отключёнными элементами управления
+      const player = new ymaps.panorama.Player(panoramaContainer, panoramas[0], {
+        direction: [0, -50],
+        zoom: 1,
+        controls: [] // Отключаем все элементы управления
+      });
+      
+      // Добавляем "парящую" метку
+      setTimeout(() => {
+        // Создаём плавающий блок метки
+        const floatingMarker = document.createElement('div');
+        floatingMarker.style.cssText = `
+          position: absolute;
+          bottom: 30px;
+          right: 30px;
+          background: rgba(0, 0, 0, 0.75);
+          backdrop-filter: blur(10px);
+          border-radius: 16px;
+          padding: 12px 20px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: white;
+          font-family: 'Manrope', sans-serif;
+          z-index: 1002;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+          border: 1px solid rgba(255,255,255,0.2);
+          animation: floatMarker 3s ease-in-out infinite;
+        `;
+        
+        // Добавляем анимацию парения
+        const style = document.createElement('style');
+        style.textContent = `
+          @keyframes floatMarker {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+          }
+        `;
+        document.head.appendChild(style);
+        
+        floatingMarker.onmouseenter = () => {
+          floatingMarker.style.transform = 'scale(1.05)';
+          floatingMarker.style.background = 'rgba(0, 0, 0, 0.85)';
+        };
+        floatingMarker.onmouseleave = () => {
+          floatingMarker.style.transform = 'scale(1)';
+          floatingMarker.style.background = 'rgba(0, 0, 0, 0.75)';
+        };
+        floatingMarker.onclick = () => {
+          panoramaContainer.remove();
+        };
+        
+        // Иконка метки
+        const iconImg = document.createElement('img');
+        iconImg.src = '/video/Ai_image.png';
+        iconImg.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.2);';
+        
+        // Текстовый блок
+        const textDiv = document.createElement('div');
+        textDiv.innerHTML = `
+          <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px;">${locationName}</div>
+          <div style="font-size: 11px; opacity: 0.85;">${locationAddress}</div>
+        `;
+        
+        floatingMarker.appendChild(iconImg);
+        floatingMarker.appendChild(textDiv);
+        
+        // Добавляем в контейнер панорамы
+        panoramaContainer.appendChild(floatingMarker);
+        
+        // Убеждаемся, что кнопка закрытия сверху
+        if (closeBtn && !panoramaContainer.contains(closeBtn)) {
+          panoramaContainer.appendChild(closeBtn);
+        }
+        if (closeBtn) closeBtn.style.zIndex = '1003';
+      }, 500);
+    },
+    function (err) {
+      console.error('Ошибка загрузки панорамы:', err);
+      panoramaContainer.innerHTML = '<div style="padding:20px; text-align:center;">Не удалось загрузить панораму</div>';
+      if (closeBtn) panoramaContainer.appendChild(closeBtn);
+    }
+  );
+}
+
 // ========== ФУНКЦИЯ ГЕНЕРАЦИИ СОДЕРЖИМОГО БАЛУНА ==========
 function generateBalloonContent(location, currentIndex = 0) {
   const images = location.images || [];
@@ -131,6 +311,13 @@ function generateBalloonContent(location, currentIndex = 0) {
           <span class="demographics-item">💰 ${incomeFormatted} ₽</span>
           <span class="demographics-item">👥 ${location.demographics.population_density} чел/км²</span>
         </div>
+        <button 
+          class="panorama-btn" 
+          onclick="showPanorama(${location.coordinates.lat}, ${location.coordinates.lon}, '${location.name}', '${location.address}')"
+          style="margin-top: 12px; width: 100%; padding: 8px; background: #1e40af; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px;"
+        >
+          🌍 Посмотреть панораму
+        </button>
       </div>
     </div>
   `;
