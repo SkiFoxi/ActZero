@@ -11,7 +11,7 @@ const locationsData = {
       coordinates: { lat: 55.7558, lon: 37.6173 },
       region: 'Москва',
       city: 'Москва',
-      description: 'Описание локации',
+      description: 'Оживлённое место',
       business_types_suitable: ['cafe', 'restaurant'],
       traffic_score: 8.5,
       competition_density: 2.3,
@@ -281,14 +281,26 @@ function generateBalloonContent(location, currentIndex = 0) {
 
   const incomeFormatted = new Intl.NumberFormat('ru-RU').format(location.demographics.average_income);
 
-  const ageGroupMap = {
-    '18-25': '🧑‍🎓',
-    '26-35': '👨‍💼',
-    '36-45': '👔',
-    '46-60': '👴',
-    '60+': '👵',
-  };
-  const ageIcon = ageGroupMap[location.demographics.age_group] || '👥';
+
+  const humanSvg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#000000" viewBox="0 0 256 256"><path d="M160,40a32,32,0,1,0-32,32A32,32,0,0,0,160,40ZM128,56a16,16,0,1,1,16-16A16,16,0,0,1,128,56Zm90.34,78.05L173.17,82.83a32,32,0,0,0-24-10.83H106.83a32,32,0,0,0-24,10.83L37.66,134.05a20,20,0,0,0,28.13,28.43l16.3-13.08L65.55,212.28A20,20,0,0,0,102,228.8l26-44.87,26,44.87a20,20,0,0,0,36.41-16.52L173.91,149.4l16.3,13.08a20,20,0,0,0,28.13-28.43Zm-11.51,16.77a4,4,0,0,1-5.66,0c-.21-.2-.42-.4-.65-.58L165,121.76A8,8,0,0,0,152.26,130L175.14,217a7.72,7.72,0,0,0,.48,1.35,4,4,0,1,1-7.25,3.38,6.25,6.25,0,0,0-.33-.63L134.92,164a8,8,0,0,0-13.84,0L88,221.05a6.25,6.25,0,0,0-.33.63,4,4,0,0,1-2.26,2.07,4,4,0,0,1-5-5.45,7.72,7.72,0,0,0,.48-1.35L103.74,130A8,8,0,0,0,91,121.76L55.48,150.24c-.23.18-.44.38-.65.58a4,4,0,1,1-5.66-5.65c.12-.12.23-.24.34-.37L94.83,93.41a16,16,0,0,1,12-5.41h42.34a16,16,0,0,1,12,5.41l45.32,51.39c.11.13.22.25.34.37A4,4,0,0,1,206.83,150.82Z"></path></svg>
+  `;
+
+  const moneySvg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#000000" viewBox="0 0 256 256"><path d="M184,89.57V84c0-25.08-37.83-44-88-44S8,58.92,8,84v40c0,20.89,26.25,37.49,64,42.46V172c0,25.08,37.83,44,88,44s88-18.92,88-44V132C248,111.3,222.58,94.68,184,89.57ZM232,132c0,13.22-30.79,28-72,28-3.73,0-7.43-.13-11.08-.37C170.49,151.77,184,139,184,124V105.74C213.87,110.19,232,122.27,232,132ZM72,150.25V126.46A183.74,183.74,0,0,0,96,128a183.74,183.74,0,0,0,24-1.54v23.79A163,163,0,0,1,96,152,163,163,0,0,1,72,150.25Zm96-40.32V124c0,8.39-12.41,17.4-32,22.87V123.5C148.91,120.37,159.84,115.71,168,109.93ZM96,56c41.21,0,72,14.78,72,28s-30.79,28-72,28S24,97.22,24,84,54.79,56,96,56ZM24,124V109.93c8.16,5.78,19.09,10.44,32,13.57v23.37C36.41,141.4,24,132.39,24,124Zm64,48v-4.17c2.63.1,5.29.17,8,.17,3.88,0,7.67-.13,11.39-.35A121.92,121.92,0,0,0,120,171.41v23.46C100.41,189.4,88,180.39,88,172Zm48,26.25V174.4a179.48,179.48,0,0,0,24,1.6,183.74,183.74,0,0,0,24-1.54v23.79a165.45,165.45,0,0,1-48,0Zm64-3.38V171.5c12.91-3.13,23.84-7.79,32-13.57V172C232,180.39,219.59,189.4,200,194.87Z"></path></svg>
+  `;
+
+  const userthreeSvg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#000000" viewBox="0 0 256 256"><path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1-7.37-4.89,8,8,0,0,1,0-6.22A8,8,0,0,1,192,112a24,24,0,1,0-23.24-30,8,8,0,1,1-15.5-4A40,40,0,1,1,219,117.51a67.94,67.94,0,0,1,27.43,21.68A8,8,0,0,1,244.8,150.4ZM190.92,212a8,8,0,1,1-13.84,8,57,57,0,0,0-98.16,0,8,8,0,1,1-13.84-8,72.06,72.06,0,0,1,33.74-29.92,48,48,0,1,1,58.36,0A72.06,72.06,0,0,1,190.92,212ZM128,176a32,32,0,1,0-32-32A32,32,0,0,0,128,176ZM72,120a8,8,0,0,0-8-8A24,24,0,1,1,87.24,82a8,8,0,1,0,15.5-4A40,40,0,1,0,37,117.51,67.94,67.94,0,0,0,9.6,139.19a8,8,0,1,0,12.8,9.61A51.6,51.6,0,0,1,64,128,8,8,0,0,0,72,120Z"></path></svg>
+  `;
+
+  const starSvg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#000000" viewBox="0 0 256 256"><path d="M239.18,97.26A16.38,16.38,0,0,0,224.92,86l-59-4.76L143.14,26.15a16.36,16.36,0,0,0-30.27,0L90.11,81.23,31.08,86a16.46,16.46,0,0,0-9.37,28.86l45,38.83L53,211.75a16.38,16.38,0,0,0,24.5,17.82L128,198.49l50.53,31.08A16.4,16.4,0,0,0,203,211.75l-13.76-58.07,45-38.83A16.43,16.43,0,0,0,239.18,97.26Zm-15.34,5.47-48.7,42a8,8,0,0,0-2.56,7.91l14.88,62.8a.37.37,0,0,1-.17.48c-.18.14-.23.11-.38,0l-54.72-33.65a8,8,0,0,0-8.38,0L69.09,215.94c-.15.09-.19.12-.38,0a.37.37,0,0,1-.17-.48l14.88-62.8a8,8,0,0,0-2.56-7.91l-48.7-42c-.12-.1-.23-.19-.13-.5s.18-.27.33-.29l63.92-5.16A8,8,0,0,0,103,91.86l24.62-59.61c.08-.17.11-.25.35-.25s.27.08.35.25L153,91.86a8,8,0,0,0,6.75,4.92l63.92,5.16c.15,0,.24,0,.33.29S224,102.63,223.84,102.73Z"></path></svg>
+  `;
+
+  const mapSvg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#000000" viewBox="0 0 256 256"><path d="M200,224H150.54A266.56,266.56,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25a88,88,0,0,0-176,0c0,31.4,14.51,64.68,42,96.25A266.56,266.56,0,0,0,105.46,224H56a8,8,0,0,0,0,16H200a8,8,0,0,0,0-16ZM56,104a72,72,0,0,1,144,0c0,57.23-55.47,105-72,118C111.47,209,56,161.23,56,104Zm112,0a40,40,0,1,0-40,40A40,40,0,0,0,168,104Zm-64,0a24,24,0,1,1,24,24A24,24,0,0,1,104,104Z"></path></svg>
+  `;
 
   return `
     <div class="modern-balloon">
@@ -298,37 +310,37 @@ function generateBalloonContent(location, currentIndex = 0) {
       </div>
       <div class="balloon-info">
         <b>${location.name}</b>
-        <div class="address">${location.address}</div>
+        <div class="address">${mapSvg}${location.address}</div>
         <div class="description">${location.description}</div>
         <div class="business-types">
           ${location.business_types_suitable
             .map(
               (type) =>
                 `<span class="business-type">${
-                  type === 'cafe' ? '☕ Кафе' : type === 'restaurant' ? '🍽️ Ресторан' : type === 'shop' ? '🛍️ Магазин' : type
+                  type === 'cafe' ? 'Кафе' : type === 'restaurant' ? 'Ресторан' : type === 'shop' ? 'Магазин' : type
                 }</span>`
             )
             .join('')}
         </div>
         <div class="info-row">
-          <div class="rating">Рейтинг: ${location.score}</div>
-          <div class="score-badge">${location.score >= 0.9 ? '🔥 Высокий потенциал' : location.score >= 0.7 ? '📈 Хороший' : '📊 Средний'}</div>
+          <div class="rating">Рейтинг: ${location.score}${starSvg}</div>
+          <div class="score-badge">${location.score >= 0.9 ? 'Высокий рейтинг' : location.score >= 0.7 ? 'Хороший рейтинг' : 'Средний рейтинг'}</div>
         </div>
         <div class="info-row">
           <div class="traffic-score">Трафик: ${location.traffic_score}/10</div>
           <div class="competition-density">Конкуренция: ${location.competition_density}</div>
         </div>
         <div class="demographics">
-          <span class="demographics-item">${ageIcon} ${location.demographics.age_group}</span>
-          <span class="demographics-item">💰 ${incomeFormatted} ₽</span>
-          <span class="demographics-item">👥 ${location.demographics.population_density} чел/км²</span>
+          <span class="demographics-item">${humanSvg} ${location.demographics.age_group}</span>
+          <span class="demographics-item">${moneySvg} ${incomeFormatted} ₽</span>
+          <span class="demographics-item">${userthreeSvg} ${location.demographics.population_density} чел/км²</span>
         </div>
         <button 
           class="panorama-btn" 
           onclick="showPanorama(${location.coordinates.lat}, ${location.coordinates.lon}, '${location.name}', '${location.address}')"
           style="margin-top: 12px; width: 100%; padding: 8px; background: #1e40af; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px;"
         >
-          🌍 Посмотреть панораму
+          Посмотреть панораму
         </button>
       </div>
     </div>

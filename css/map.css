@@ -216,16 +216,7 @@ html, body {
   gap: 4px;
 }
 
-.modern-balloon .traffic-score::before {
-  content: "🚦";
-  font-size: 12px;
-}
 
-.modern-balloon .competition-density::before {
-  content: "🏪";
-  font-size: 12px;
-  margin-right: 4px;
-}
 
 .modern-balloon .address {
   display: flex;
@@ -233,11 +224,6 @@ html, body {
   gap: 4px;
   margin: 8px 0;
   color: #475569;
-  font-size: 12px;
-}
-
-.modern-balloon .address::before {
-  content: "📍";
   font-size: 12px;
 }
 
@@ -291,10 +277,6 @@ html, body {
   padding: 2px 8px;
   border-radius: 20px;
   font-weight: 600;
-}
-
-.modern-balloon .rating::before {
-  content: "⭐";
 }
 
 /* Анимация плавного появления */
