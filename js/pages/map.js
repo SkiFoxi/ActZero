@@ -19,8 +19,8 @@ const locationsData = {
         population_density: 5000,
       },
       score: 0.95,
-      image: '/video/Ai_image.png',
-      images: ['/video/Ai_image.png', '/video/kaisa_1.png', 'https://via.placeholder.com/300x200?text=Image+3'],
+      image: '/video/Ai_image.png',                                                                              //Иконка метки
+      images: ['/video/Ai_image.png', '/video/kaisa_1.png', 'https://via.placeholder.com/300x200?text=Image+3'], //Изображение заведения
     },
     {
       id: 'loc_2',
@@ -40,8 +40,8 @@ const locationsData = {
         population_density: 7000,
       },
       score: 0.88,
-      image: '/video/Ai_image.png',
-      images: ['/video/kaisa_1.png', '/video/Ai_image.png', 'https://via.placeholder.com/300x200?text=Additional'],
+      image: '/video/Ai_image.png',                                                                                     //Иконка метки
+      images: ['/video/kaisa_1.png', '/video/Ai_image.png', 'https://via.placeholder.com/300x200?text=Additional'],     //Изображение заведения
     },
   ],
   total: 2,
@@ -309,6 +309,7 @@ function initMap() {
   }
 
   function showClusterMarker() {
+    // Удаляем старые отдельные метки
     markers.forEach((marker) => {
       if (marker) {
         map.geoObjects.remove(marker);
@@ -327,15 +328,35 @@ function initMap() {
       </div>
     `;
 
+    // Используем ту же картинку, что и у отдельных меток, но увеличенную
+    const clusterImage = '/video/Ai_image.png';                                                // можно заменить на специальную иконку кластера
+    const clusterSize = [60, 60];
+    const clusterOffset = [-30, -60]; // смещение, чтобы «хвостик» указывал на точку привязки
+
     clusterMarker = new ymaps.Placemark(
       center,
       {
         balloonContent: balloonContent,
         hintContent: `Локации (${count})`,
-        iconCaption: count.toString(),
+        iconContent: count.toString(), // число будет отображаться поверх картинки
       },
       {
-        preset: 'islands#blueCircleIcon',
+        iconLayout: 'default#imageWithContent',
+        iconImageHref: clusterImage,
+        iconImageSize: clusterSize,
+        iconImageOffset: clusterOffset,
+        // Настройки для текста
+        iconContentOffset: [0, 0],
+        iconContentSize: clusterSize,
+        iconContentPadding: [0, 0, 0, 0],
+        iconContentStyle: {
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: '#ffffff',
+          textAlign: 'center',
+          lineHeight: `${clusterSize[1]}px`,
+          textShadow: '0 0 4px rgba(0,0,0,0.7)',
+        },
         openBalloonOnClick: true,
       }
     );
