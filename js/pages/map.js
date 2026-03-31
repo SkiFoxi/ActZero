@@ -357,7 +357,7 @@ function scheduleCloseBalloon(placemark) {
       placemark.balloon.close();
     }
     closeTimer = null;
-  }, 4000);
+  }, 800);
 }
 
 // ========== ОТКРЫТИЕ БАЛУНА С ЗАДЕРЖКОЙ ==========
@@ -541,25 +541,21 @@ function setupCitySelector(map) {
 
     try {
       let items = [];
-      // Пытаемся использовать suggest, если он доступен
       if (typeof ymaps.suggest === 'function') {
         try {
           const suggestResult = await ymaps.suggest(query);
-          items = suggestResult.map(item => ({
-            displayName: item.displayName,
-            value: item.value
-          }));
+          if (Array.isArray(suggestResult)) {
+            items = suggestResult.map(item => ({
+              displayName: item.displayName || item.value,
+              value: item.value
+            }));
+          }
         } catch (err) {
           console.warn('ymaps.suggest недоступен, используем геокодер', err);
-          // fallback на геокодер
-          const geoRes = await ymaps.geocode(query, { results: 5 });
-          geoRes.geoObjects.each(obj => {
-            const name = obj.getAddressLine();
-            if (name) items.push({ displayName: name, value: name });
-          });
         }
-      } else {
-        // suggest нет, используем геокодер
+      }
+
+      if (items.length === 0) {
         const geoRes = await ymaps.geocode(query, { results: 5 });
         geoRes.geoObjects.each(obj => {
           const name = obj.getAddressLine();
