@@ -4,6 +4,7 @@ const DEFAULT_MARKER_IMAGE = '/video/Ai_image.png';
 let currentClusterer = null;
 let preloadedMarkerData = new Map(); // key = location.id, value = { originalUrl, blueUrl }
 let mapInstance = null;
+let originalFilterTop = null;
 // ========== ДАННЫЕ ЛОКАЦИЙ ==========
 const locationsData = {
   locations: [
@@ -665,7 +666,15 @@ function setupFilterPanel() {
       panel.style.display = 'none';
     }
   });
-
+    // Сохраняем исходное вертикальное положение фильтра
+  if (originalFilterTop === null) {
+    const filterContainer = document.querySelector('.filter-selector-container');
+    if (filterContainer) {
+      const computedTop = parseInt(getComputedStyle(filterContainer).top);
+      originalFilterTop = isNaN(computedTop) ? 160 : computedTop;
+      filterContainer.style.top = originalFilterTop + 'px';
+    }
+  }
   resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
 }
 // ========== МЕНЮ ВЫБОРА ГОРОДА С ПОИСКОМ ==========
@@ -882,6 +891,25 @@ function setupCitySelector(map) {
     e.stopPropagation();
     const isVisible = panel.style.display === 'flex';
     panel.style.display = isVisible ? 'none' : 'flex';
+
+    // Смещение фильтра
+    const filterContainer = document.querySelector('.filter-selector-container');
+    if (filterContainer) {
+      if (!isVisible) {
+        // Открываем панель города → сдвигаем фильтр вниз
+        const panelHeight = panel.offsetHeight;
+        let filterTop = parseInt(filterContainer.style.top);
+        if (isNaN(filterTop)) filterTop = 160;
+        if (originalFilterTop === null) originalFilterTop = filterTop;
+        filterContainer.style.top = (filterTop + panelHeight + 10) + 'px';
+      } else {
+        // Закрываем панель города → возвращаем фильтр на место
+        if (originalFilterTop !== null) {
+          filterContainer.style.top = originalFilterTop + 'px';
+        }
+      }
+    }
+
     if (!isVisible) {
       searchInput.focus();
       renderHistory();
@@ -892,7 +920,14 @@ function setupCitySelector(map) {
   // Закрытие при клике вне меню
   document.addEventListener('click', (e) => {
     if (!selectorContainer.contains(e.target)) {
-      panel.style.display = 'none';
+      if (panel.style.display === 'flex') {
+        panel.style.display = 'none';
+        // Возвращаем фильтр на место
+        const filterContainer = document.querySelector('.filter-selector-container');
+        if (filterContainer && originalFilterTop !== null) {
+          filterContainer.style.top = originalFilterTop + 'px';
+        }
+      }
     }
   });
 
