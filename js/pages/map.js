@@ -1,6 +1,9 @@
 // ========== ГЛОБАЛЬНЫЕ НАСТРОЙКИ ==========
 const DEFAULT_MARKER_IMAGE = '/video/Ai_image.png';
 
+let currentClusterer = null;
+let preloadedMarkerData = new Map(); // key = location.id, value = { originalUrl, blueUrl }
+let mapInstance = null;
 // ========== ДАННЫЕ ЛОКАЦИЙ ==========
 const locationsData = {
   locations: [
@@ -460,7 +463,211 @@ function openBalloonWithDelay(placemark, location) {
     }, 50);
   }, 300);
 }
+// ========== ФИЛЬТРАЦИЯ МЕТОК ==========
+function rebuildClusterer(filteredLocations) {
+  if (!mapInstance) return;
+  if (currentClusterer) {
+    mapInstance.geoObjects.remove(currentClusterer);
+  }
+  if (!filteredLocations.length) {
+    currentClusterer = null;
+    return;
+  }
 
+  const placemarks = [];
+  filteredLocations.forEach(location => {
+    const markerInfo = preloadedMarkerData.get(location.id);
+    if (!markerInfo) return;
+    const coords = [location.coordinates.lat, location.coordinates.lon];
+    const normalSize = [40, 40];
+    const normalOffset = [-20, -40];
+    const placemark = new ymaps.Placemark(
+      coords,
+      { hintContent: location.name, iconCaption: '' },
+      {
+        iconLayout: 'default#image',
+        iconImageHref: markerInfo.originalUrl,
+        iconImageSize: normalSize,
+        iconImageOffset: normalOffset,
+        openBalloonOnClick: false,
+        hideIconOnBalloonOpen: false,
+        balloonOffset: [-100, -27],
+      }
+    );
+    placemark.userData = location;
+    placemark._blueImage = markerInfo.blueUrl;
+
+    placemark.events.add('mouseenter', () => {
+      placemark.options.set({ iconImageHref: markerInfo.blueUrl });
+      openBalloonWithDelay(placemark, location);
+    });
+    placemark.events.add('mouseleave', () => {
+      placemark.options.set({ iconImageHref: markerInfo.originalUrl });
+      if (openTimer) clearTimeout(openTimer);
+      scheduleCloseBalloon(placemark);
+    });
+    placemarks.push(placemark);
+  });
+
+  const clusterer = new ymaps.Clusterer({
+    gridSize: 100,
+    preset: 'islands#blueClusterIcons',
+    clusterDisableClickZoom: false,
+    clusterOpenBalloonOnClick: false,
+    minClusterSize: 2,
+  });
+  clusterer.add(placemarks);
+  mapInstance.geoObjects.add(clusterer);
+  currentClusterer = clusterer;
+
+  // Обновить границы по отфильтрованным точкам
+  if (filteredLocations.length > 0) {
+    const coordsArray = filteredLocations.map(loc => [loc.coordinates.lat, loc.coordinates.lon]);
+    const bounds = ymaps.util.bounds.fromPoints(coordsArray);
+    mapInstance.setBounds(bounds, { checkZoomRange: true, zoomMargin: 50 });
+  }
+}
+
+// ========== ПАНЕЛЬ ФИЛЬТРОВ ==========
+function setupFilterPanel() {
+  const container = document.createElement('div');
+  container.className = 'filter-selector-container';
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'filter-selector-toggle';
+  toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M200,136a8,8,0,0,1-8,8H64a8,8,0,0,1,0-16H192A8,8,0,0,1,200,136Zm32-56H24a8,8,0,0,0,0,16H232a8,8,0,0,0,0-16Zm-80,96H104a8,8,0,0,0,0,16h48a8,8,0,0,0,0-16Z"></path></svg> Фильтры';
+  toggleBtn.title = 'Фильтры';
+
+  const panel = document.createElement('div');
+  panel.className = 'filter-selector-panel';
+  panel.style.display = 'none';
+
+  // Элементы фильтров
+  const citySelect = document.createElement('select');
+  citySelect.className = 'filter-select';
+  const typeSelect = document.createElement('select');
+  typeSelect.className = 'filter-select';
+  const ratingMinInput = document.createElement('input');
+  ratingMinInput.type = 'number';
+  ratingMinInput.placeholder = 'Рейтинг от';
+  ratingMinInput.step = 0.1;
+  ratingMinInput.min = 0;
+  ratingMinInput.max = 1;
+  ratingMinInput.value = 0;
+  const ratingMaxInput = document.createElement('input');
+  ratingMaxInput.type = 'number';
+  ratingMaxInput.placeholder = 'Рейтинг до';
+  ratingMaxInput.step = 0.1;
+  ratingMaxInput.min = 0;
+  ratingMaxInput.max = 1;
+  ratingMaxInput.value = 1;
+
+  const applyBtn = document.createElement('button');
+  applyBtn.textContent = 'Применить';
+  applyBtn.className = 'filter-apply-btn';
+  const resetBtn = document.createElement('button');
+  resetBtn.textContent = 'Сбросить';
+  resetBtn.className = 'filter-reset-btn';
+
+  const resultsCountSpan = document.createElement('span');
+  resultsCountSpan.className = 'filter-results-count';
+
+  // Заполнение селектов уникальными значениями
+  const citiesSet = new Set();
+  const typesSet = new Set();
+  locationsData.locations.forEach(loc => {
+    if (loc.city) citiesSet.add(loc.city);
+    loc.business_types_suitable.forEach(t => typesSet.add(t));
+  });
+  const cities = Array.from(citiesSet).sort();
+  const types = Array.from(typesSet).sort();
+
+  citySelect.innerHTML = '<option value="">Все города</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join('');
+  typeSelect.innerHTML = '<option value="">Все типы</option>' + types.map(t => `<option value="${t}">${t === 'cafe' ? 'Кафе' : t === 'restaurant' ? 'Ресторан' : t === 'shop' ? 'Магазин' : t}</option>`).join('');
+
+  function applyFilters() {
+    const selectedCity = citySelect.value;
+    const selectedType = typeSelect.value;
+    const minRating = parseFloat(ratingMinInput.value);
+    const maxRating = parseFloat(ratingMaxInput.value);
+
+    const filtered = locationsData.locations.filter(loc => {
+      if (selectedCity && loc.city !== selectedCity) return false;
+      if (selectedType && !loc.business_types_suitable.includes(selectedType)) return false;
+      const score = loc.score;
+      if (score < minRating || score > maxRating) return false;
+      return true;
+    });
+
+    resultsCountSpan.textContent = `Найдено: ${filtered.length}`;
+    rebuildClusterer(filtered);
+    panel.style.display = 'none';
+  }
+
+  function resetFilters() {
+    citySelect.value = '';
+    typeSelect.value = '';
+    ratingMinInput.value = 0;
+    ratingMaxInput.value = 1;
+    applyFilters();
+  }
+
+  applyBtn.addEventListener('click', applyFilters);
+  resetBtn.addEventListener('click', resetFilters);
+
+  // Сборка панели
+  const filterTitle = document.createElement('div');
+  filterTitle.className = 'filter-title';
+  filterTitle.textContent = 'Фильтры';
+  panel.appendChild(filterTitle);
+  panel.appendChild(citySelect);
+  panel.appendChild(typeSelect);
+  const ratingRow = document.createElement('div');
+  ratingRow.className = 'rating-row';
+  ratingRow.appendChild(ratingMinInput);
+  ratingRow.appendChild(document.createTextNode(' — '));
+  ratingRow.appendChild(ratingMaxInput);
+  panel.appendChild(ratingRow);
+  const btnRow = document.createElement('div');
+  btnRow.className = 'filter-buttons';
+  btnRow.appendChild(applyBtn);
+  btnRow.appendChild(resetBtn);
+  panel.appendChild(btnRow);
+  panel.appendChild(resultsCountSpan);
+
+  container.appendChild(toggleBtn);
+  container.appendChild(panel);
+  document.body.appendChild(container);
+
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isVisible = panel.style.display === 'flex';
+    panel.style.display = isVisible ? 'none' : 'flex';
+    if (!isVisible) {
+      // обновим счётчик при открытии
+      const selectedCity = citySelect.value;
+      const selectedType = typeSelect.value;
+      const minRating = parseFloat(ratingMinInput.value);
+      const maxRating = parseFloat(ratingMaxInput.value);
+      const count = locationsData.locations.filter(loc => {
+        if (selectedCity && loc.city !== selectedCity) return false;
+        if (selectedType && !loc.business_types_suitable.includes(selectedType)) return false;
+        const score = loc.score;
+        if (score < minRating || score > maxRating) return false;
+        return true;
+      }).length;
+      resultsCountSpan.textContent = `Найдено: ${count}`;
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target)) {
+      panel.style.display = 'none';
+    }
+  });
+
+  resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
+}
 // ========== МЕНЮ ВЫБОРА ГОРОДА С ПОИСКОМ ==========
 function setupCitySelector(map) {
   // Контейнер меню
@@ -704,6 +911,8 @@ function initMap() {
     controls: ['zoomControl', 'fullscreenControl'],
     balloonAutoPan: false,
   });
+  mapInstance = map;
+  window.map = map;
 
   // Сохраняем карту глобально для использования в других функциях
   window.map = map;
@@ -719,14 +928,12 @@ function initMap() {
 
   // Подготавливаем данные для маркеров: загружаем изображения и создаём синие версии
   const markerData = [];
-  const loadPromises = locationsData.locations.map((location, idx) => {
+  const loadPromises = locationsData.locations.map(location => {
     return new Promise((resolve) => {
-      // Используем изображение локации или глобальное по умолчанию
       const originalUrl = (location.image && location.image.trim() !== '') ? location.image : DEFAULT_MARKER_IMAGE;
       const img = new Image();
       img.crossOrigin = 'Anonymous';
       img.onload = () => {
-        // Создаём синюю версию через canvas
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
@@ -735,34 +942,25 @@ function initMap() {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
         for (let i = 0; i < data.length; i += 4) {
-          let r = data[i];
-          let g = data[i+1];
-          let b = data[i+2];
-          // Преобразуем в синий оттенок (заменяем красный и зелёный на синий)
-          data[i] = b;     // красный = синий
-          data[i+1] = g;   // зелёный оставляем (можно менять)
-          data[i+2] = 150; // синий делаем максимальным для яркости
+          data[i] = data[i+2];
+          data[i+2] = 150;
         }
         ctx.putImageData(imageData, 0, 0);
         const blueUrl = canvas.toDataURL();
-        markerData[idx] = {
-          location: location,
-          originalUrl: originalUrl,
-          blueUrl: blueUrl
-        };
+        preloadedMarkerData.set(location.id, { originalUrl, blueUrl });
         resolve();
       };
       img.onerror = () => {
         console.warn('Не удалось загрузить иконку', originalUrl);
-        markerData[idx] = {
-          location: location,
-          originalUrl: originalUrl,
-          blueUrl: originalUrl // в случае ошибки синяя версия = оригинал
-        };
+        preloadedMarkerData.set(location.id, { originalUrl, blueUrl: originalUrl });
         resolve();
       };
       img.src = originalUrl;
     });
+  });
+
+  Promise.all(loadPromises).then(() => {
+    rebuildClusterer(locationsData.locations);
   });
 
   // После загрузки всех изображений создаём маркеры и добавляем в кластеризатор
@@ -874,7 +1072,7 @@ function initMap() {
 
   // Добавляем меню выбора города с поиском
   setupCitySelector(map);
-
+  setupFilterPanel();
   return map;
 }
 
