@@ -17,6 +17,7 @@ import (
 	"go_oauth2_server/internal/config"
 	"go_oauth2_server/internal/handlers"
 	"go_oauth2_server/internal/storage"
+	"go_oauth2_server/internal/models"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-migrate/migrate/v4"
@@ -130,6 +131,15 @@ func run() error {
 	}
 
 	store := storage.NewPostgresStore(db)
+	// Создаём клиента по умолчанию при первом запуске
+	defaultClient := &models.Client{
+		ID:        "actzero-client-id",
+		Secret:    "actzero-client-secret",
+		Domain:    "http://localhost",
+		UserID:    "system",
+		CreatedAt: time.Now(),
+	}
+	_ = store.CreateClient(context.Background(), defaultClient)
 	h := handlers.New(store, logger, cfg)
 
 	router := chi.NewRouter()

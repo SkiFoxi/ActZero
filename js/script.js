@@ -94,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ===== Инициализация модалок после загрузки modal.html =====
 document.addEventListener('DOMContentLoaded', function() {
-  // Ждем загрузки modal.html
   setTimeout(() => {
     const registerModal = document.getElementById('registerModal');
     if (!registerModal) {
@@ -143,7 +142,8 @@ document.addEventListener('DOMContentLoaded', function() {
           const tokenResponse = await fetch('http://localhost:8081/token', {
               method: 'POST',
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: `grant_type=password&client_id=11d0f8d8-0701-433b-a956-8cdc5b7877fc&client_secret=42d94f36-293e-4ac1-80dc-b99a4a6d84ec&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`          });
+              body: `grant_type=password&client_id=actzero-client-id&client_secret=actzero-client-secret&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+          });
 
           const tokenData = await tokenResponse.json();
           localStorage.setItem('token', tokenData.access_token);
@@ -177,7 +177,8 @@ document.addEventListener('DOMContentLoaded', function() {
           const tokenResponse = await fetch('http://localhost:8081/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `grant_type=password&client_id=11d0f8d8-0701-433b-a956-8cdc5b7877fc&client_secret=42d94f36-293e-4ac1-80dc-b99a4a6d84ec&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`          });
+            body: `grant_type=password&client_id=actzero-client-id&client_secret=actzero-client-secret&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+          });
 
           const tokenData = await tokenResponse.json();
           if (!tokenData.access_token) {
