@@ -126,27 +126,31 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.textContent = 'Отправка...';
 
         try {
-          const response = await fetch('http://localhost:5076/auth/register', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ name, email, phone, password })
+          // Шаг 1 — регистрируем пользователя
+          const regResponse = await fetch('http://localhost:8081/users', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: email, password, email })
           });
 
-          const data = await response.json();
+          if (!regResponse.ok) {
+              const err = await regResponse.json();
+              alert(err.error_description || 'Ошибка регистрации');
+              return;
+          }
 
-          if (response.ok) {
-              localStorage.setItem('token', data.token);
-              closeModal();
-              window.location.href = '/htmllist/lkabinet.html';
-          }
-          else {
-            alert(data.message || 'Ошибка регистрации');
-          }
+          // Шаг 2 — получаем токен
+          const tokenResponse = await fetch('http://localhost:8081/token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `grant_type=password&client_id=11d0f8d8-0701-433b-a956-8cdc5b7877fc&client_secret=42d94f36-293e-4ac1-80dc-b99a4a6d84ec&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`          });
+
+          const tokenData = await tokenResponse.json();
+          localStorage.setItem('token', tokenData.access_token);
+          closeModal();
+          window.location.href = '/htmllist/lkabinet.html';
         } catch (error) {
-          console.error('Ошибка:', error);
-          alert('Не удалось соединиться с сервером. Убедитесь, что сервер запущен на http://localhost:5076');
+          alert('Ошибка соединения с сервером');
         } finally {
           submitBtn.disabled = false;
           submitBtn.textContent = 'Зарегистрироваться';
@@ -170,22 +174,20 @@ document.addEventListener('DOMContentLoaded', function() {
         loginBtn.textContent = 'Вход...';
 
         try {
-          const response = await fetch('http://localhost:5076/auth/login', {
+          const tokenResponse = await fetch('http://localhost:8081/token', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-          });
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `grant_type=password&client_id=11d0f8d8-0701-433b-a956-8cdc5b7877fc&client_secret=42d94f36-293e-4ac1-80dc-b99a4a6d84ec&username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`          });
 
-          const data = await response.json();
-
-          if (response.ok) {
-            localStorage.setItem('token', data.token);
-            alert('Вход выполнен успешно');
-            closeLoginModal();
-            window.location.href = '/htmllist/lkabinet.html';
-          } else {
-            alert(data.message || 'Неверный email или пароль');
+          const tokenData = await tokenResponse.json();
+          if (!tokenData.access_token) {
+            alert('Неверный email или пароль');
+            return;
           }
+
+          localStorage.setItem('token', tokenData.access_token);
+          closeLoginModal();
+          window.location.href = '/htmllist/lkabinet.html';
         } catch (error) {
           alert('Ошибка соединения с сервером');
         } finally {

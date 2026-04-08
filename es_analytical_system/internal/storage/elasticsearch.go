@@ -19,9 +19,9 @@ import (
 // Использует прямые HTTP запросы для совместимости с OpenSearch.
 type ElasticsearchStorage struct {
 	client     *elasticsearch.Client // Официальный клиент Elasticsearch
-	index      string                // Имя индекса для локаций
-	httpClient *http.Client          // HTTP клиент для прямых запросов
-	baseURL    string                // Базовый URL Elasticsearch/OpenSearch
+	index      string                 // Имя индекса для локаций
+	httpClient *http.Client           // HTTP клиент для прямых запросов
+	baseURL    string                 // Базовый URL Elasticsearch/OpenSearch
 }
 
 // NewElasticsearchStorageWithURL создает новый экземпляр ElasticsearchStorage с указанным URL.
@@ -176,7 +176,7 @@ func (es *ElasticsearchStorage) GetLocation(ctx context.Context, id string) (*mo
 	}
 
 	var result struct {
-		Found  bool            `json:"found"`
+		Found  bool           `json:"found"`
 		Source models.Location `json:"_source"`
 	}
 
@@ -256,7 +256,7 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 	if req.Region != "" {
 		mustClauses = append(mustClauses, map[string]interface{}{
 			"term": map[string]interface{}{
-				"region.keyword": req.Region,
+				"region": req.Region,
 			},
 		})
 	}
@@ -265,7 +265,7 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 	if req.City != "" {
 		mustClauses = append(mustClauses, map[string]interface{}{
 			"term": map[string]interface{}{
-				"city.keyword": req.City,
+				"city": req.City,
 			},
 		})
 	}
@@ -274,7 +274,7 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 	if req.BusinessType != "" {
 		mustClauses = append(mustClauses, map[string]interface{}{
 			"term": map[string]interface{}{
-				"business_types_suitable.keyword": req.BusinessType,
+				"business_types_suitable": req.BusinessType,
 			},
 		})
 	}
@@ -283,7 +283,7 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 	shouldClauses = append(shouldClauses, map[string]interface{}{
 		"range": map[string]interface{}{
 			"traffic_score": map[string]interface{}{
-				"gte":   7.0,
+				"gte": 7.0,
 				"boost": 2.0,
 			},
 		},
@@ -292,7 +292,7 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 	shouldClauses = append(shouldClauses, map[string]interface{}{
 		"range": map[string]interface{}{
 			"competition_density": map[string]interface{}{
-				"lte":   3.0,
+				"lte": 3.0,
 				"boost": 1.5,
 			},
 		},
@@ -301,8 +301,8 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
-				"must":                 mustClauses,
-				"should":               shouldClauses,
+				"must": mustClauses,
+				"should": shouldClauses,
 				"minimum_should_match": 0,
 			},
 		},
@@ -331,3 +331,4 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 
 	return query
 }
+
