@@ -735,3 +735,14 @@ html, body {
     padding: 12px;
   }
 }
+/* ===== КНОПКА КОНКУРЕНТОВ В БАЛУНЕ ===== */
+.competitors-btn {
+  transition: background 0.2s, transform 0.15s !important;
+}
+.competitors-btn:hover {
+  background: #b91c1c !important;
+  transform: translateY(-1px);
+}
+.competitors-btn:active {
+  transform: scale(0.97);
+}

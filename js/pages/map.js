@@ -1,10 +1,13 @@
 // ========== ГЛОБАЛЬНЫЕ НАСТРОЙКИ ==========
 const DEFAULT_MARKER_IMAGE = '/video/Ai_image.png';
+const YANDEX_SEARCH_API_KEY = '253d660e-0ffd-47d9-bac7-96ce406dd312';
 
 let currentClusterer = null;
 let preloadedMarkerData = new Map(); // key = location.id, value = { originalUrl, blueUrl }
 let mapInstance = null;
 let originalFilterTop = null;
+let competitorsCollection = null; // Коллекция меток конкурентов
+let activeCompetitorsBalloon = null; // Текущий балун конкурентов
 // ========== ДАННЫЕ ЛОКАЦИЙ ==========
 const locationsData = {
   locations: [
@@ -359,16 +362,178 @@ function generateBalloonContent(location, currentIndex = 0) {
           <span class="demographics-item">${moneySvg} ${incomeFormatted} ₽</span>
           <span class="demographics-item">${userthreeSvg} ${location.demographics.population_density} чел/км²</span>
         </div>
-        <button 
-          class="panorama-btn" 
-          onclick="showPanorama(${location.coordinates.lat}, ${location.coordinates.lon}, '${location.name}', '${location.address}')"
-          style="margin-top: 12px; width: 100%; padding: 8px; background: #1e40af; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px;"
-        >
-          Посмотреть панораму
-        </button>
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button 
+            class="panorama-btn" 
+            onclick="showPanorama(${location.coordinates.lat}, ${location.coordinates.lon}, '${location.name}', '${location.address}')"
+            style="flex: 1; padding: 8px; background: #1e40af; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px;"
+          >
+            Панорама
+          </button>
+          <button 
+            class="competitors-btn"
+            onclick="showCompetitors(${location.coordinates.lat}, ${location.coordinates.lon}, '${location.business_types_suitable.join(',')}')"
+            style="flex: 1; padding: 8px; background: #dc2626; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 5px;"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="white" viewBox="0 0 256 256"><path d="M229.27,133l-96-112A8,8,0,0,0,122.73,21l-96,112A8,8,0,0,0,32,136H72v88a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V136h40a8,8,0,0,0,6.06-13.19Z" opacity=".2"/><path d="M229.27,133l-96-112A8,8,0,0,0,122.73,21l-96,112A8,8,0,0,0,32,136H72v88a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V136h40a8,8,0,0,0,6.06-13.19ZM48.43,120,128,36.51,207.57,120Z"/></svg>
+            Конкуренты
+          </button>
+        </div>
       </div>
     </div>
   `;
+}
+
+// ========== ФУНКЦИЯ ПОКАЗА КОНКУРЕНТОВ ==========
+
+// Маппинг типов заведений на категории Яндекс.Геопоиска
+const BUSINESS_TYPE_CATEGORIES = {
+  cafe:       'кафе',
+  restaurant: 'ресторан',
+  shop:       'магазин',
+  bar:        'бар',
+  hotel:      'гостиница',
+  gym:        'фитнес',
+  pharmacy:   'аптека',
+  beauty:     'салон красоты',
+};
+
+function clearCompetitors() {
+  if (competitorsCollection && mapInstance) {
+    mapInstance.geoObjects.remove(competitorsCollection);
+    competitorsCollection = null;
+    activeCompetitorsBalloon = null;
+  }
+  const statusPanel = document.getElementById('competitors-status');
+  if (statusPanel) statusPanel.remove();
+}
+
+function showCompetitorsBalloon(placemark, competitor) {
+  if (!mapInstance) return;
+  if (activeCompetitorsBalloon && activeCompetitorsBalloon !== placemark) {
+    activeCompetitorsBalloon.balloon.close();
+  }
+  const content = `
+    <div style="font-family:'Manrope',sans-serif; padding:14px; max-width:260px; min-width:200px;">
+      <div style="font-weight:700; font-size:15px; color:#0f172a; margin-bottom:4px;">${competitor.name}</div>
+      ${competitor.address ? `<div style="font-size:12px; color:#64748b; margin-bottom:6px;">📍 ${competitor.address}</div>` : ''}
+      ${competitor.rating ? `<div style="display:inline-flex;align-items:center;gap:4px;background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:20px;font-weight:600;font-size:12px;">⭐ ${competitor.rating}</div>` : ''}
+      ${competitor.categories && competitor.categories.length > 0 ? `<div style="margin-top:8px;font-size:11px;color:#475569;">${competitor.categories.join(', ')}</div>` : ''}
+    </div>
+  `;
+  placemark.properties.set('balloonContentBody', content);
+  placemark.balloon.open();
+  activeCompetitorsBalloon = placemark;
+}
+
+async function showCompetitors(lat, lon, businessTypesRaw) {
+  const businessTypes = typeof businessTypesRaw === 'string' ? businessTypesRaw.split(',').map(s => s.trim()).filter(Boolean) : businessTypesRaw;
+  if (!mapInstance) return;
+
+  // Toggle: если конкуренты уже показаны — скрыть
+  if (competitorsCollection) {
+    clearCompetitors();
+    return;
+  }
+
+  // Индикатор загрузки
+  let statusPanel = document.getElementById('competitors-status');
+  if (!statusPanel) {
+    statusPanel = document.createElement('div');
+    statusPanel.id = 'competitors-status';
+    statusPanel.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15,23,42,0.92);
+      color: white;
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 2000;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    `;
+    document.body.appendChild(statusPanel);
+  }
+  statusPanel.innerHTML = '<span style="display:inline-block;">⏳</span> Ищем конкурентов...';
+
+  competitorsCollection = new ymaps.GeoObjectCollection();
+  mapInstance.geoObjects.add(competitorsCollection);
+
+  const allResults = [];
+
+  for (const type of businessTypes) {
+    const query = BUSINESS_TYPE_CATEGORIES[type] || type;
+    const url = `https://search-maps.yandex.ru/v1/?text=${encodeURIComponent(query)}&ll=${lon},${lat}&spn=0.02,0.02&type=biz&lang=ru_RU&results=10&apikey=${YANDEX_SEARCH_API_KEY}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) continue;
+      const data = await response.json();
+      if (data.features) allResults.push(...data.features);
+    } catch (e) {
+      console.error('Ошибка поиска конкурентов:', e);
+    }
+  }
+
+  // Дедупликация
+  const seen = new Set();
+  const unique = allResults.filter(f => {
+    const key = f.properties?.CompanyMetaData?.id || f.properties?.name;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (unique.length === 0) {
+    statusPanel.innerHTML = '😔 Конкуренты не найдены рядом';
+    setTimeout(() => { if (statusPanel.parentNode) statusPanel.remove(); }, 3000);
+    clearCompetitors();
+    return;
+  }
+
+  unique.forEach(feature => {
+    const coords = feature.geometry?.coordinates; // GeoJSON [lon, lat]
+    if (!coords) return;
+
+    const meta = feature.properties?.CompanyMetaData || {};
+    const name = meta.name || feature.properties?.name || 'Организация';
+    const address = meta.address || '';
+    const rating = meta.rating?.score ? meta.rating.score.toFixed(1) : null;
+    const categories = meta.Categories?.map(c => c.name) || [];
+
+    const competitorPlacemark = new ymaps.Placemark(
+      [coords[1], coords[0]], // [lat, lon]
+      { hintContent: name, balloonContentBody: '' },
+      {
+        preset: 'islands#redDotIcon',
+        openBalloonOnClick: false,
+        balloonOffset: [-110, -10],
+        balloonCloseButton: true,
+      }
+    );
+
+    competitorPlacemark.events.add('click', () => {
+      showCompetitorsBalloon(competitorPlacemark, { name, address, rating, categories });
+    });
+    competitorPlacemark.events.add('mouseenter', () => {
+      competitorPlacemark.options.set('preset', 'islands#redIcon');
+    });
+    competitorPlacemark.events.add('mouseleave', () => {
+      competitorPlacemark.options.set('preset', 'islands#redDotIcon');
+    });
+
+    competitorsCollection.add(competitorPlacemark);
+  });
+
+  const count = competitorsCollection.getLength();
+  statusPanel.innerHTML = `🏪 Конкурентов поблизости: <b style="margin: 0 4px;">${count}</b> &nbsp;·&nbsp; <span style="cursor:pointer;text-decoration:underline;opacity:0.8;" onclick="clearCompetitors()">Скрыть</span>`;
 }
 
 // ========== ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ КАРУСЕЛИ ==========
