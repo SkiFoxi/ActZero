@@ -2,7 +2,7 @@
 
 /* ===== 3D карточки ===== */
 .card-3d {
-  width: 200%;
+  width: 100%;
   aspect-ratio: 3 / 4;
   height: auto;
   perspective: 1000px;
