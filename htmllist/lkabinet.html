@@ -5,310 +5,707 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ActZero — Личный кабинет</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=009332ba-3ebb-4304-b4a6-5094de979623&suggest_apikey=5775275f-299b-4987-b802-cc3fbb3fa568&lang=ru_RU" type="text/javascript"></script>
+  <link rel="stylesheet" href="/css/map.css">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Manrope', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ===== RESET / BASE ===== */
+    body { background: #f5f6fa; }
+
+    /* ===== SPA ===== */
+    .page-section { display: none; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: #0f1623;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 40;
+      transition: transform 0.3s ease;
+    }
+    .sidebar-logo {
+      padding: 22px 20px 18px;
+      border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-logo-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+    .sidebar-logo-sub { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
+    .sidebar-nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 11px;
+      padding: 10px 12px; border-radius: 10px;
+      cursor: pointer; font-size: 13px; font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      transition: all 0.15s ease; text-decoration: none;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .sidebar-link:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+    .sidebar-link.active { background: rgba(255,255,255,0.1); color: #fff; }
+    .sidebar-link svg { flex-shrink: 0; opacity: 0.55; transition: opacity 0.15s; }
+    .sidebar-link:hover svg, .sidebar-link.active svg { opacity: 1; }
+
+    .sidebar-section {
+      font-size: 10px; color: rgba(255,255,255,0.22);
+      padding: 12px 12px 4px; letter-spacing: 0.8px; text-transform: uppercase;
+    }
+    .sidebar-user {
+      padding: 14px 16px;
+      border-top: 0.5px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #2563eb; display: flex; align-items: center;
+      justify-content: center; font-size: 11px; font-weight: 700;
+      color: #fff; flex-shrink: 0;
+    }
+    .sidebar-uname { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 600; }
+    .sidebar-uemail { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 1px; }
+    .sidebar-logout {
+      margin-left: auto; background: none; border: none;
+      color: rgba(255,255,255,0.3); cursor: pointer; font-size: 16px;
+      transition: color 0.15s; padding: 4px;
+    }
+    .sidebar-logout:hover { color: rgba(255,255,255,0.7); }
+
+    /* MOBILE SIDEBAR */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 39; backdrop-filter: blur(2px);
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .main-content { margin-left: 0 !important; }
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .main-content { margin-left: 240px; min-height: 100vh; background: #f5f6fa; }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      background: #fff;
+      border-bottom: 0.5px solid #e5e7eb;
+      padding: 0 28px;
+      height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 30;
+    }
+    .topbar-title { font-size: 15px; font-weight: 700; color: #0f172a; }
+    .topbar-sub { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-balance {
+      display: flex; align-items: center; gap: 6px;
+      background: #f0fdf4; border: 0.5px solid #86efac;
+      border-radius: 20px; padding: 5px 14px;
+      font-size: 12px; font-weight: 600; color: #15803d;
+    }
+    .topbar-btn {
+      background: #1d4ed8; color: #fff; border: none;
+      border-radius: 20px; padding: 7px 16px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: background 0.15s; display: flex; align-items: center; gap: 5px;
+    }
+    .topbar-btn:hover { background: #1e40af; }
+    .topbar-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: #f8fafc; border: 0.5px solid #e5e7eb;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .topbar-icon:hover { background: #f1f5f9; }
+    .topbar-hamburger {
+      display: none; background: none; border: none;
+      font-size: 20px; cursor: pointer; padding: 4px;
+    }
+    @media (max-width: 768px) { .topbar-hamburger { display: block; } }
+
+    /* ===== CONTENT AREA ===== */
+    .content-area { padding: 24px 28px; }
+
+    /* ===== STAT CARDS ===== */
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+    @media (max-width: 1024px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .stat-grid { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: #fff; border: 0.5px solid #e5e7eb;
+      border-radius: 14px; padding: 16px 18px;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); transform: translateY(-1px); }
+    .stat-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px;
+    }
+    .stat-value { font-size: 22px; font-weight: 700; color: #0f172a; line-height: 1; }
+    .stat-label { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+    .stat-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 10px; font-weight: 600; padding: 3px 8px;
+      border-radius: 20px; margin-top: 8px;
+    }
+    .badge-up { background: #f0fdf4; color: #15803d; }
+    .badge-down { background: #fef2f2; color: #b91c1c; }
+    .badge-neu { background: #f8fafc; color: #64748b; }
+    .mini-bars { display: flex; align-items: flex-end; gap: 3px; height: 30px; margin-top: 10px; }
+    .mini-bar { flex: 1; border-radius: 2px 2px 0 0; transition: background 0.2s; }
+
+    /* ===== BOTTOM GRID ===== */
+    .bottom-grid { display: grid; grid-template-columns: 280px 1fr; gap: 14px; }
+    @media (max-width: 900px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+    /* ===== BALANCE CARD ===== */
+    .balance-card {
+      background: #0f1623; border-radius: 14px; padding: 20px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .balance-label { font-size: 11px; color: rgba(255,255,255,0.4); }
+    .balance-amount { font-size: 28px; font-weight: 700; color: #fff; margin-top: 4px; }
+    .balance-btns { display: flex; gap: 8px; }
+    .balance-btn {
+      flex: 1; padding: 8px 10px; border-radius: 9px;
+      font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s;
+    }
+    .balance-btn-primary { background: #2563eb; color: #fff; }
+    .balance-btn-primary:hover { background: #1d4ed8; }
+    .balance-btn-sec { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+    .balance-btn-sec:hover { background: rgba(255,255,255,0.12); }
+    .balance-hint { font-size: 10px; color: rgba(255,255,255,0.25); }
+
+    /* ===== CAMPAIGNS CARD ===== */
+    .campaigns-card {
+      background: #fff; border: 0.5px solid #e5e7eb;
+      border-radius: 14px; padding: 18px 20px;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+    }
+    .card-title { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .card-link { font-size: 12px; color: #2563eb; cursor: pointer; font-weight: 500; }
+    .card-link:hover { text-decoration: underline; }
+
+    .camp-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 9px 0; border-bottom: 0.5px solid #f1f5f9;
+    }
+    .camp-row:last-child { border: none; padding-bottom: 0; }
+    .camp-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .camp-name { font-size: 13px; font-weight: 600; color: #0f172a; }
+    .camp-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .camp-badge {
+      margin-left: auto; font-size: 10px; font-weight: 600;
+      padding: 3px 9px; border-radius: 20px; flex-shrink: 0;
+    }
+    .cb-active { background: #f0fdf4; color: #15803d; }
+    .cb-pause { background: #fffbeb; color: #92400e; }
+
+    /* ===== RECOMMENDATIONS ===== */
+    .recs-card {
+      background: #fff; border: 0.5px solid #e5e7eb;
+      border-radius: 14px; padding: 18px 20px;
+    }
+    .rec-items { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .rec-item {
+      border-radius: 10px; padding: 14px; cursor: pointer; transition: opacity 0.15s;
+    }
+    .rec-item:hover { opacity: 0.85; }
+    .rec-icon { font-size: 20px; margin-bottom: 6px; }
+    .rec-title { font-size: 12px; font-weight: 700; color: #0f172a; }
+    .rec-desc { font-size: 11px; color: #64748b; margin-top: 3px; }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .page-section.page-visible {
+      display: block;
+      animation: fadeIn 0.22s ease forwards;
+    }
+    #page-map.page-visible { display: block; }
+
+    /* ===== MAP PAGE ===== */
+    #page-map { height: calc(100vh - 56px); position: relative; }
+    #page-map #map { width: 100%; height: 100%; }
+
+    /* ===== CAMPAIGNS PAGE ===== */
+    .camp-table-row {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 70px;
+      align-items: center; padding: 12px 20px;
+      border-bottom: 0.5px solid #f1f5f9; gap: 12px;
+      transition: background 0.12s; font-size: 13px;
+    }
+    .camp-table-row:hover { background: #f8fafc; }
+    .camp-table-row:last-child { border: none; }
+    .toggle {
+      width: 38px; height: 20px; background: #e5e7eb;
+      border-radius: 999px; position: relative;
+      cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+    }
+    .toggle.on { background: #2563eb; }
+    .toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #fff; transition: left 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .toggle.on::after { left: 20px; }
+
+    /* ===== COURSES ===== */
+    .course-card {
+      background: #fff; border: 0.5px solid #e5e7eb;
+      border-radius: 12px; padding: 16px; cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .course-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-2px); }
+    .prog-bar { width: 100%; height: 5px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+    .prog-fill { height: 100%; background: #2563eb; border-radius: 999px; }
+    .filter-tab {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 0.5px solid #e5e7eb; background: #fff;
+      color: #64748b; transition: all 0.15s;
+    }
+    .filter-tab.active, .filter-tab:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+    /* ===== BUDGET PAGE ===== */
+    .budget-balance {
+      background: #0f1623; border-radius: 14px; padding: 24px;
+    }
+    .stat-mini {
+      background: #fff; border: 0.5px solid #e5e7eb;
+      border-radius: 12px; padding: 16px;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-mini:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); transform: translateY(-1px); }
+  </style>
 </head>
 
-<body class="bg-gray-50">
+<body>
 
-<!-- Sidebar overlay (mobile) -->
 <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
 
 <!-- ===== SIDEBAR ===== -->
 <aside class="sidebar" id="sidebar">
-  <!-- Logo -->
-  <div class="px-6 py-5 border-b border-gray-100">
-    <div class="text-xl font-bold tracking-tight">ActZero</div>
-    <div class="text-xs text-gray-400 mt-0.5">Рекламный кабинет</div>
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-title">ActZero</div>
+    <div class="sidebar-logo-sub">Личный кабинет</div>
   </div>
 
-  <!-- Nav -->
-  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-    <a class="sidebar-link active" onclick="window.location.href='lkabinet.html'">
-      <span class="icon">📊</span> Обзор
-    </a>
-   
-    <a class="sidebar-link" onclick="window.location.href='campaigns.html'">
-      <span class="icon">🚀</span> Кампании
-    </a>
-
-    <a class="sidebar-link" onclick="window.location.href='stats.html'">
-      <span class="icon">📈</span> Статистика
-    </a>
-  
-    <a class="sidebar-link" onclick="window.location.href='budget.html'">
-      <span class="icon">💳</span> Бюджет и оплата
-    </a>
-
-    <a class="sidebar-link" onclick="window.location.href='map.html'">
-      <span class="icon">🗺️</span> Карта
-    </a>
-
-    <a class="sidebar-link" onclick="window.location.href='courses.html'">
-      <span class="icon">📚</span> Курсы
-    </a>
-
-
-    <div class="pt-3 pb-1 px-2 text-xs text-gray-400 font-semibold uppercase tracking-wider">Настройки</div>
-    <a class="sidebar-link" onclick="setPage('help')">
-      <span class="icon">💬</span> Поддержка
-    </a>
+  <nav class="sidebar-nav">
+    <button class="sidebar-link" data-page="overview" onclick="navigateTo('overview')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      Обзор
+    </button>
+    <button class="sidebar-link" data-page="campaigns" onclick="navigateTo('campaigns')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Кампании
+    </button>
+    <button class="sidebar-link" data-page="stats" onclick="navigateTo('stats')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Статистика
+    </button>
+    <button class="sidebar-link" data-page="budget" onclick="navigateTo('budget')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Бюджет и оплата
+    </button>
+    <button class="sidebar-link" data-page="map" onclick="navigateTo('map')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Карта локаций
+    </button>
+    <button class="sidebar-link" data-page="courses" onclick="navigateTo('courses')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Курсы
+    </button>
+    <div class="sidebar-section">Настройки</div>
+    <button class="sidebar-link" data-page="profile" onclick="navigateTo('profile')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Профиль
+    </button>
+    <button class="sidebar-link" data-page="help" onclick="navigateTo('help')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Поддержка
+    </button>
   </nav>
 
-  <!-- User -->
-  <div class="px-4 py-4 border-t border-gray-100 flex items-center gap-3">
-    <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">ИИ</div>
-    <div class="flex-1 min-w-0">
-      <div class="text-sm font-semibold truncate" id="sidebar-name">НикНейм</div>
-      <div class="text-xs text-gray-400 truncate" id="sidebar-email">Почта</div>
+  <div class="sidebar-user">
+    <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+    <div>
+      <div class="sidebar-uname" id="sidebar-name">Загрузка...</div>
+      <div class="sidebar-uemail" id="sidebar-email">—</div>
     </div>
-    <button class="text-gray-400 hover:text-gray-700 text-lg" title="Выйти" onclick="logout()">↩</button>
+    <button class="sidebar-logout" onclick="logout()" title="Выйти">↩</button>
   </div>
 </aside>
 
 <!-- ===== MAIN CONTENT ===== -->
 <div class="main-content">
 
-  <!-- Top bar -->
-  <header class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
-    <div class="flex items-center gap-3">
-      <button class="md:hidden p-2 rounded-xl hover:bg-gray-100 text-xl" onclick="openSidebar()">☰</button>
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="topbar-hamburger" onclick="openSidebar()">☰</button>
       <div>
-        <h1 class="text-lg font-bold" id="page-title">Обзор</h1>
-        <div class="text-xs text-gray-400" id="page-subtitle">Добро пожаловать, Иван 👋</div>
+        <div class="topbar-title" id="page-title">Обзор</div>
+        <div class="topbar-sub" id="page-subtitle">Добро пожаловать 👋</div>
       </div>
     </div>
-    <div class="flex items-center gap-3">
-      <!-- Balance pill -->
-      <div class="hidden sm:flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-semibold">
-        <span>💰</span> <span class="user-balance">0 ₽</span>
+    <div class="topbar-right">
+      <div class="topbar-balance">
+        <svg width="12" height="12" fill="none" stroke="#15803d" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        <span class="user-balance">0 ₽</span>
       </div>
-      <!-- New campaign -->
-      <button onclick="window.location.href='campaigns.html'" class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-2">
-        <span class="text-base leading-none">+</span> Кампания
+      <button class="topbar-btn" onclick="navigateTo('campaigns')">
+        <span>+</span> Кампания
       </button>
-      <!-- Notifications -->
-      <button class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-xl">
-        🔔
-        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-      </button>
-      <button onclick="setPage('profile')" class="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-xl">
-        <span class="icon">👤</span>
-      </button>
+      <div class="topbar-icon" style="position:relative">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span style="position:absolute;top:6px;right:6px;width:6px;height:6px;background:#ef4444;border-radius:50%"></span>
+      </div>
+      <div class="topbar-icon" onclick="navigateTo('profile')" style="cursor:pointer">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
     </div>
   </header>
 
-  <!-- ===== PAGE: DASHBOARD ===== -->
-  <div id="page-dashboard" class="p-6 space-y-6">
-
-    <!-- Stats grid -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Показы -->
-      <div class="stat-card fade-up fade-up-1">
-        <div class="flex items-start justify-between mb-3">
-          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-xl">👁</div>
-          <span class="badge badge-green">+12%</span>
+  <!-- ===== PAGE: OVERVIEW ===== -->
+  <div id="page-overview" class="page-section content-area">
+    <!-- Stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#eff6ff">
+          <svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
-        <div class="text-2xl font-bold mt-2">84 320</div>
-        <div class="text-sm text-gray-400 mt-0.5">Показы</div>
-        <div class="bar-wrap mt-3">
-          <div class="bar" style="height:40%"></div>
-          <div class="bar" style="height:55%"></div>
-          <div class="bar" style="height:45%"></div>
-          <div class="bar" style="height:70%"></div>
-          <div class="bar" style="height:60%"></div>
-          <div class="bar active-bar" style="height:85%"></div>
-          <div class="bar" style="height:75%"></div>
+        <div class="stat-value">84 320</div>
+        <div class="stat-label">Показы</div>
+        <div class="stat-badge badge-up">↑ +12%</div>
+        <div class="mini-bars">
+          <div class="mini-bar" style="height:40%;background:#bfdbfe"></div>
+          <div class="mini-bar" style="height:55%;background:#bfdbfe"></div>
+          <div class="mini-bar" style="height:45%;background:#bfdbfe"></div>
+          <div class="mini-bar" style="height:70%;background:#bfdbfe"></div>
+          <div class="mini-bar" style="height:60%;background:#bfdbfe"></div>
+          <div class="mini-bar" style="height:85%;background:#2563eb"></div>
+          <div class="mini-bar" style="height:75%;background:#bfdbfe"></div>
         </div>
       </div>
-      <!-- Клики -->
-      <div class="stat-card fade-up fade-up-2">
-        <div class="flex items-start justify-between mb-3">
-          <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-xl">🖱️</div>
-          <span class="badge badge-green">+8%</span>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#f5f3ff">
+          <svg width="16" height="16" fill="none" stroke="#7c3aed" stroke-width="1.8" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </div>
-        <div class="text-2xl font-bold mt-2">3 412</div>
-        <div class="text-sm text-gray-400 mt-0.5">Клики</div>
-        <div class="bar-wrap mt-3">
-          <div class="bar" style="height:35%"></div>
-          <div class="bar" style="height:50%"></div>
-          <div class="bar" style="height:40%"></div>
-          <div class="bar" style="height:65%"></div>
-          <div class="bar" style="height:55%"></div>
-          <div class="bar active-bar" style="height:80%"></div>
-          <div class="bar" style="height:70%"></div>
-        </div>
-      </div>
-      <!-- CTR -->
-      <div class="stat-card fade-up fade-up-3">
-        <div class="flex items-start justify-between mb-3">
-          <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-xl">📊</div>
-          <span class="badge badge-yellow">±0%</span>
-        </div>
-        <div class="text-2xl font-bold mt-2">4.05%</div>
-        <div class="text-sm text-gray-400 mt-0.5">CTR</div>
-        <div class="bar-wrap mt-3">
-          <div class="bar" style="height:50%"></div>
-          <div class="bar" style="height:45%"></div>
-          <div class="bar" style="height:60%"></div>
-          <div class="bar" style="height:55%"></div>
-          <div class="bar" style="height:65%"></div>
-          <div class="bar active-bar" style="height:60%"></div>
-          <div class="bar" style="height:58%"></div>
+        <div class="stat-value">3 412</div>
+        <div class="stat-label">Клики</div>
+        <div class="stat-badge badge-up">↑ +8%</div>
+        <div class="mini-bars">
+          <div class="mini-bar" style="height:35%;background:#ddd6fe"></div>
+          <div class="mini-bar" style="height:50%;background:#ddd6fe"></div>
+          <div class="mini-bar" style="height:40%;background:#ddd6fe"></div>
+          <div class="mini-bar" style="height:65%;background:#ddd6fe"></div>
+          <div class="mini-bar" style="height:55%;background:#ddd6fe"></div>
+          <div class="mini-bar" style="height:80%;background:#7c3aed"></div>
+          <div class="mini-bar" style="height:70%;background:#ddd6fe"></div>
         </div>
       </div>
-      <!-- Расход -->
-      <div class="stat-card fade-up fade-up-4">
-        <div class="flex items-start justify-between mb-3">
-          <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-xl">💸</div>
-          <span class="badge badge-red">-3%</span>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#f0fdf4">
+          <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         </div>
-        <div class="text-2xl font-bold mt-2">7 600 ₽</div>
-        <div class="text-sm text-gray-400 mt-0.5">Расход за 7 дней</div>
-        <div class="bar-wrap mt-3">
-          <div class="bar" style="height:60%"></div>
-          <div class="bar" style="height:75%"></div>
-          <div class="bar" style="height:50%"></div>
-          <div class="bar" style="height:80%"></div>
-          <div class="bar" style="height:65%"></div>
-          <div class="bar active-bar" style="height:55%"></div>
-          <div class="bar" style="height:70%"></div>
+        <div class="stat-value">4.05%</div>
+        <div class="stat-label">CTR</div>
+        <div class="stat-badge badge-neu">→ ±0%</div>
+        <div class="mini-bars">
+          <div class="mini-bar" style="height:50%;background:#bbf7d0"></div>
+          <div class="mini-bar" style="height:45%;background:#bbf7d0"></div>
+          <div class="mini-bar" style="height:60%;background:#bbf7d0"></div>
+          <div class="mini-bar" style="height:55%;background:#bbf7d0"></div>
+          <div class="mini-bar" style="height:65%;background:#bbf7d0"></div>
+          <div class="mini-bar" style="height:60%;background:#16a34a"></div>
+          <div class="mini-bar" style="height:58%;background:#bbf7d0"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff7ed">
+          <svg width="16" height="16" fill="none" stroke="#ea580c" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div class="stat-value">7 600 ₽</div>
+        <div class="stat-label">Расход / 7 дней</div>
+        <div class="stat-badge badge-down">↓ -3%</div>
+        <div class="mini-bars">
+          <div class="mini-bar" style="height:60%;background:#fed7aa"></div>
+          <div class="mini-bar" style="height:75%;background:#fed7aa"></div>
+          <div class="mini-bar" style="height:50%;background:#fed7aa"></div>
+          <div class="mini-bar" style="height:80%;background:#fed7aa"></div>
+          <div class="mini-bar" style="height:65%;background:#fed7aa"></div>
+          <div class="mini-bar" style="height:55%;background:#ea580c"></div>
+          <div class="mini-bar" style="height:70%;background:#fed7aa"></div>
         </div>
       </div>
     </div>
 
-    <!-- Balance + Quick actions -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 fade-up fade-up-3">
+    <!-- Bottom row -->
+    <div class="bottom-grid">
       <!-- Balance -->
       <div class="balance-card">
-        <div class="relative z-10">
-          <div class="text-sm text-blue-200 font-medium mb-1">Баланс счёта</div>
-          <div class="text-3xl font-bold mb-4 user-balance">0 ₽</div>
-          <div class="flex gap-2">
-            <button class="px-4 py-2 bg-white text-blue-700 rounded-full text-sm font-semibold hover:bg-blue-50">Пополнить</button>
-            <button class="px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold hover:bg-white/30">История</button>
-          </div>
-          <div class="mt-4 pt-4 border-t border-white/20 flex items-center gap-2 text-blue-100 text-xs">
-            <span>⚡</span> Прогноза хватит на ~8 дней
-          </div>
+        <div>
+          <div class="balance-label">Баланс счёта</div>
+          <div class="balance-amount user-balance">0 ₽</div>
         </div>
+        <div class="balance-btns">
+          <button class="balance-btn balance-btn-primary">Пополнить</button>
+          <button class="balance-btn balance-btn-sec">История</button>
+        </div>
+        <div class="balance-hint">⚡ Прогноза хватит на ~8 дней</div>
       </div>
 
-      <!-- Quick stats -->
-      <div class="md:col-span-2 bg-white rounded-3xl p-5 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
-          <div class="font-bold">Активные кампании</div>
-          <a onclick="setPage('campaigns')" class="text-blue-600 text-sm font-medium cursor-pointer hover:underline">Все →</a>
+      <!-- Campaigns preview -->
+      <div class="campaigns-card">
+        <div class="card-header">
+          <div class="card-title">Активные кампании</div>
+          <span class="card-link" onclick="navigateTo('campaigns')">Все →</span>
         </div>
-        <div class="space-y-3">
-          <!-- campaign item -->
-          <div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer">
-            <div class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center text-lg flex-shrink-0">🔍</div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold truncate">Поиск — Главная</div>
-              <div class="text-xs text-gray-400">1 240 кликов · 28 конверсий</div>
-            </div>
-            <span class="badge badge-green">Активна</span>
-          </div>
-          <div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer">
-            <div class="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center text-lg flex-shrink-0">🗺️</div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold truncate">Яндекс Карты — Офис</div>
-              <div class="text-xs text-gray-400">820 кликов · 14 конверсий</div>
-            </div>
-            <span class="badge badge-green">Активна</span>
-          </div>
-          <div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer">
-            <div class="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center text-lg flex-shrink-0">📦</div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold truncate">Товарная галерея — Зима</div>
-              <div class="text-xs text-gray-400">320 кликов · 5 конверсий</div>
-            </div>
-            <span class="badge badge-yellow">На паузе</span>
-          </div>
+        <div class="camp-row">
+          <div class="camp-icon" style="background:#eff6ff">🔍</div>
+          <div><div class="camp-name">Поиск — Главная</div><div class="camp-sub">1 240 кликов · 28 конверсий</div></div>
+          <div class="camp-badge cb-active">Активна</div>
+        </div>
+        <div class="camp-row">
+          <div class="camp-icon" style="background:#f5f3ff">🗺️</div>
+          <div><div class="camp-name">Яндекс Карты — Офис</div><div class="camp-sub">820 кликов · 14 конверсий</div></div>
+          <div class="camp-badge cb-active">Активна</div>
+        </div>
+        <div class="camp-row">
+          <div class="camp-icon" style="background:#fff7ed">📦</div>
+          <div><div class="camp-name">Товарная галерея — Зима</div><div class="camp-sub">320 кликов · 5 конверсий</div></div>
+          <div class="camp-badge cb-pause">На паузе</div>
         </div>
       </div>
     </div>
 
     <!-- Recommendations -->
-    <div class="bg-white rounded-3xl p-5 shadow-sm fade-up fade-up-5">
-      <div class="font-bold mb-4">💡 Рекомендации ActZero</div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="bg-blue-50 rounded-2xl p-4 cursor-pointer hover:bg-blue-100 transition-colors">
-          <div class="text-2xl mb-2">🎯</div>
-          <div class="text-sm font-semibold mb-1">Расширьте аудиторию</div>
-          <div class="text-xs text-gray-500">Похожие пользователи увеличат охват на ~30%</div>
+    <div class="recs-card" style="margin-top:14px">
+      <div class="card-header"><div class="card-title">💡 Рекомендации ActZero</div></div>
+      <div class="rec-items">
+        <div class="rec-item" style="background:#eff6ff" onclick="navigateTo('map')">
+          <div class="rec-icon">🗺️</div>
+          <div class="rec-title">Найдите локацию</div>
+          <div class="rec-desc">Откройте карту и получите рекомендации для бизнеса</div>
         </div>
-        <div class="bg-green-50 rounded-2xl p-4 cursor-pointer hover:bg-green-100 transition-colors">
-          <div class="text-2xl mb-2">💰</div>
-          <div class="text-sm font-semibold mb-1">Пополните баланс</div>
-          <div class="text-xs text-gray-500">Осталось на 8 дней — пополните заранее</div>
+        <div class="rec-item" style="background:#f0fdf4" onclick="navigateTo('courses')">
+          <div class="rec-icon">📚</div>
+          <div class="rec-title">Продолжите курс</div>
+          <div class="rec-desc">Аналитика для малого бизнеса — 65% завершено</div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- ===== PAGE: CAMPAIGNS ===== -->
+  <div id="page-campaigns" class="page-section content-area">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <h2 style="font-size:18px;font-weight:700;color:#0f172a">Кампании</h2>
+        <p style="font-size:12px;color:#94a3b8;margin-top:3px">Управляйте всеми рекламными кампаниями</p>
+      </div>
+      <button class="topbar-btn">+ Создать кампанию</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="topbar-btn" style="background:#2563eb">Все</button>
+      <button style="padding:6px 14px;border-radius:20px;background:#fff;color:#64748b;font-size:12px;font-weight:600;border:0.5px solid #e5e7eb;cursor:pointer">Активные</button>
+      <button style="padding:6px 14px;border-radius:20px;background:#fff;color:#64748b;font-size:12px;font-weight:600;border:0.5px solid #e5e7eb;cursor:pointer">На паузе</button>
+      <button style="padding:6px 14px;border-radius:20px;background:#fff;color:#64748b;font-size:12px;font-weight:600;border:0.5px solid #e5e7eb;cursor:pointer">Завершённые</button>
+    </div>
+    <div style="background:#fff;border:0.5px solid #e5e7eb;border-radius:14px;overflow:hidden">
+      <div class="camp-table-row" style="background:#f8fafc;font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">
+        <div>Кампания</div><div>Бюджет / день</div><div>Клики · CTR</div><div>Расход</div><div style="text-align:center">Статус</div>
+      </div>
+      <div class="camp-table-row"><div><div style="font-weight:600;font-size:13px">Поиск — Главная</div><div style="font-size:11px;color:#94a3b8">Поиск Яндекса · CPC</div></div><div style="font-weight:600">1 000 ₽</div><div>1 240 · <span style="color:#16a34a;font-weight:600">4.2%</span></div><div style="font-weight:600">4 320 ₽</div><div style="display:flex;justify-content:center"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div></div>
+      <div class="camp-table-row"><div><div style="font-weight:600;font-size:13px">Яндекс Карты — Офис</div><div style="font-size:11px;color:#94a3b8">Карты · CPM</div></div><div style="font-weight:600">500 ₽</div><div>820 · <span style="color:#16a34a;font-weight:600">3.8%</span></div><div style="font-weight:600">1 980 ₽</div><div style="display:flex;justify-content:center"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div></div>
+      <div class="camp-table-row"><div><div style="font-weight:600;font-size:13px">Товарная галерея — Зима</div><div style="font-size:11px;color:#94a3b8">Товарная галерея · CPC</div></div><div style="font-weight:600">300 ₽</div><div>320 · <span style="color:#d97706;font-weight:600">2.1%</span></div><div style="font-weight:600">960 ₽</div><div style="display:flex;justify-content:center"><div class="toggle" onclick="this.classList.toggle('on')"></div></div></div>
+      <div class="camp-table-row"><div><div style="font-weight:600;font-size:13px">РСЯ — Ретаргетинг</div><div style="font-size:11px;color:#94a3b8">Рекламная сеть · CPM</div></div><div style="font-weight:600">700 ₽</div><div>530 · <span style="color:#16a34a;font-weight:600">5.1%</span></div><div style="font-weight:600">2 100 ₽</div><div style="display:flex;justify-content:center"><div class="toggle on" onclick="this.classList.toggle('on')"></div></div></div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: STATS ===== -->
+  <div id="page-stats" class="page-section content-area">
+    <div style="display:flex;align-items:center;justify-content:center;height:300px;background:#fff;border:0.5px solid #e5e7eb;border-radius:14px">
+      <div style="text-align:center"><div style="font-size:40px;margin-bottom:12px">📈</div><div style="font-size:16px;font-weight:700;color:#0f172a">Статистика</div><div style="font-size:12px;color:#94a3b8;margin-top:6px">Раздел в разработке</div></div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: BUDGET ===== -->
+  <div id="page-budget" class="page-section content-area">
+    <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:20px">Бюджет и оплата</h2>
+    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:14px">
+      <div class="budget-balance">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4)">Текущий баланс</div>
+        <div style="font-size:30px;font-weight:700;color:#fff;margin:6px 0 16px">0 ₽</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:10px">Пополнить счёт</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="balance-btn balance-btn-sec">1 000 ₽</button>
+          <button class="balance-btn balance-btn-primary">5 000 ₽</button>
+          <button class="balance-btn balance-btn-sec">10 000 ₽</button>
+        </div>
+        <button style="width:100%;padding:10px;background:#fff;color:#1d4ed8;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer">Пополнить</button>
+      </div>
+      <div style="background:#fff;border:0.5px solid #e5e7eb;border-radius:14px;padding:18px 20px">
+        <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:14px">История транзакций</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid #f1f5f9"><div style="width:32px;height:32px;border-radius:9px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">⬆️</div><div style="flex:1"><div style="font-size:13px;font-weight:600">Пополнение</div><div style="font-size:11px;color:#94a3b8">28 фев, 14:32</div></div><div style="color:#16a34a;font-weight:700;font-size:13px">+5 000 ₽</div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid #f1f5f9"><div style="width:32px;height:32px;border-radius:9px;background:#fef2f2;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📢</div><div style="flex:1"><div style="font-size:13px;font-weight:600">Поиск — Главная</div><div style="font-size:11px;color:#94a3b8">27 фев, 00:00</div></div><div style="color:#ef4444;font-weight:700;font-size:13px">-1 000 ₽</div></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0"><div style="width:32px;height:32px;border-radius:9px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">⬆️</div><div style="flex:1"><div style="font-size:13px;font-weight:600">Пополнение</div><div style="font-size:11px;color:#94a3b8">20 фев, 10:15</div></div><div style="color:#16a34a;font-weight:700;font-size:13px">+10 000 ₽</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: MAP ===== -->
+  <div id="page-map" class="page-section">
+    <div id="map"></div>
+  </div>
+
+  <!-- ===== PAGE: COURSES ===== -->
+  <div id="page-courses" class="page-section content-area">
+    <!-- Hero -->
+    <div style="background:#0f1623;border-radius:14px;padding:22px 24px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px">
+        <div><div style="font-size:16px;font-weight:700;color:#fff">Моё обучение</div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:3px">Продолжайте с того места, где остановились</div></div>
+        <span style="padding:5px 12px;background:rgba(255,255,255,0.08);border-radius:20px;font-size:11px;font-weight:500;color:rgba(255,255,255,0.6);white-space:nowrap">Путь: Маркетолог</span>
+      </div>
+      <div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:6px"><span>Прогресс пути</span><span>4 из 12 курсов</span></div><div style="height:6px;background:rgba(255,255,255,0.12);border-radius:999px;overflow:hidden"><div style="height:100%;width:33%;background:#2563eb;border-radius:999px"></div></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:38px;height:38px;border-radius:9px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📊</div><div><div style="font-size:13px;font-weight:600;color:#fff">Аналитика для малого бизнеса</div><div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Урок 5 из 12 · 65% завершено</div></div></div>
+        <button style="padding:7px 16px;background:#2563eb;color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Продолжить →</button>
+      </div>
+    </div>
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+      <div class="stat-mini"><div style="font-size:20px;margin-bottom:6px">⏱️</div><div style="font-size:20px;font-weight:700;color:#0f172a">12.5</div><div style="font-size:11px;color:#94a3b8">Часов обучения</div></div>
+      <div class="stat-mini"><div style="font-size:20px;margin-bottom:6px">📜</div><div style="font-size:20px;font-weight:700;color:#0f172a">4</div><div style="font-size:11px;color:#94a3b8">Пройдено курсов</div></div>
+      <div class="stat-mini"><div style="font-size:20px;margin-bottom:6px">🏆</div><div style="font-size:20px;font-weight:700;color:#0f172a">3</div><div style="font-size:11px;color:#94a3b8">Сертификата</div></div>
+    </div>
+    <!-- Filters -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="filter-tabs">
+      <button class="filter-tab active" data-filter="all">Все курсы</button>
+      <button class="filter-tab" data-filter="marketing">📢 Маркетинг</button>
+      <button class="filter-tab" data-filter="finance">💰 Финансы</button>
+      <button class="filter-tab" data-filter="sales">🤝 Продажи</button>
+      <button class="filter-tab" data-filter="analytics">📊 Аналитика</button>
+    </div>
+    <div style="margin-bottom:12px;font-size:14px;font-weight:700;color:#0f172a">Прохожу сейчас</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px" id="in-progress-courses"></div>
+    <div style="margin-bottom:12px;font-size:14px;font-weight:700;color:#0f172a">Рекомендуем вам</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="recommended-courses"></div>
+  </div>
 
   <!-- ===== PAGE: PROFILE ===== -->
-  <div id="page-profile" class="p-6 hidden">
-    <h2 class="text-xl font-bold mb-6">Профиль</h2>
-    <div class="bg-white rounded-3xl shadow-sm p-6 max-w-2xl space-y-5">
-      <!-- Avatar -->
-      <div class="flex items-center gap-5">
-        <div class="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">ИИ</div>
-        <div>
-          <div class="font-bold text-lg" id="profile-name">НикНейм</div>
-          <div class="text-gray-400 text-sm" id="profile-email">Почта</div>
-          <button class="mt-2 text-sm text-blue-600 hover:underline">Изменить фото</button>
-        </div>
+  <div id="page-profile" class="page-section content-area">
+    <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:20px">Профиль</h2>
+    <div style="background:#fff;border:0.5px solid #e5e7eb;border-radius:14px;padding:24px;max-width:560px">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+        <div style="width:64px;height:64px;border-radius:14px;background:#2563eb;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700;flex-shrink:0" id="profile-avatar">?</div>
+        <div><div style="font-size:16px;font-weight:700;color:#0f172a" id="profile-name">Загрузка...</div><div style="font-size:12px;color:#94a3b8;margin-top:3px" id="profile-email">—</div><button style="margin-top:8px;font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;padding:0">Изменить фото</button></div>
       </div>
-      <hr class="border-gray-100">
-      <!-- Fields -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1.5">Имя</label>
-          <input id="profile-input-name" class="...">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1.5">Фамилия</label>
-          <input id="profile-input-name" class="...">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1.5">Email</label>
-          <input id="profile-input-email" type="email" class="...">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-600 mb-1.5">Телефон</label>
-          <input id="profile-input-phone" type="tel" class="...">
-        </div>
-      </div>
-      <button class="px-6 py-3 bg-blue-600 text-white rounded-full font-semibold text-sm hover:bg-blue-700">Сохранить изменения</button>
     </div>
   </div>
 
-  <div id="page-notifications" class="p-6 hidden">
-    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
-      <div class="text-center">
-        <div class="text-5xl mb-4">🔔</div>
-        <div class="font-bold text-xl mb-2">Уведомления</div>
-        <div class="text-gray-400 text-sm">Раздел в разработке</div>
-      </div>
+  <!-- ===== PAGE: HELP ===== -->
+  <div id="page-help" class="page-section content-area">
+    <div style="display:flex;align-items:center;justify-content:center;height:300px;background:#fff;border:0.5px solid #e5e7eb;border-radius:14px">
+      <div style="text-align:center"><div style="font-size:40px;margin-bottom:12px">💬</div><div style="font-size:16px;font-weight:700;color:#0f172a">Поддержка</div><div style="font-size:12px;color:#94a3b8;margin-top:6px">Раздел в разработке</div></div>
     </div>
   </div>
-  <div id="page-help" class="p-6 hidden">
-    <div class="flex items-center justify-center h-64 bg-white rounded-3xl shadow-sm">
-      <div class="text-center">
-        <div class="text-5xl mb-4">💬</div>
-        <div class="font-bold text-xl mb-2">Поддержка</div>
-        <div class="text-gray-400 text-sm">Раздел в разработке</div>
-      </div>
-    </div>
-  </div>
+
 </div><!-- /main-content -->
 
 <script src="/js/script.js"></script>
+<script src="/js/pages/map.js"></script>
 <script src="/js/pages/lkabinet.js"></script>
 <script src="/js/auth-token.js"></script>
+
+<script>
+const coursesData = {
+  inProgress: [
+    { title:"SMM для малого бизнеса", icon:"📱", progress:75, lessons:"9 из 12", color:"#f5f3ff", tag:"Маркетинг", tagColor:"#7c3aed", category:"marketing" },
+    { title:"Финансовый учёт", icon:"💰", progress:45, lessons:"5 из 11", color:"#f0fdf4", tag:"Финансы", tagColor:"#16a34a", category:"finance" },
+    { title:"Управление командой", icon:"👥", progress:30, lessons:"3 из 10", color:"#eff6ff", tag:"Управление", tagColor:"#2563eb", category:"management" }
+  ],
+  recommended: [
+    { title:"Таргетинг в соцсетях", icon:"🎯", lessons:"8 уроков", level:"Новичок", lc:"#16a34a", lb:"#f0fdf4", color:"#fff7ed", category:"marketing" },
+    { title:"Аналитика для бизнеса", icon:"📊", lessons:"12 уроков", level:"Средний", lc:"#d97706", lb:"#fffbeb", color:"#eff6ff", category:"analytics" },
+    { title:"Продажи на Wildberries", icon:"📦", lessons:"10 уроков", level:"Профи", lc:"#dc2626", lb:"#fef2f2", color:"#fef2f2", category:"sales" }
+  ]
+};
+
+function renderCourses(filter = 'all') {
+  const ip = document.getElementById('in-progress-courses');
+  const rec = document.getElementById('recommended-courses');
+  if (!ip || !rec) return;
+  const fip = filter === 'all' ? coursesData.inProgress : coursesData.inProgress.filter(c => c.category === filter);
+  ip.innerHTML = fip.map(c => `
+    <div class="course-card">
+      <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:10px">
+        <div style="width:40px;height:40px;border-radius:10px;background:${c.color};display:flex;align-items:center;justify-content:center;font-size:18px">${c.icon}</div>
+        <span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:3px 8px;border-radius:20px;font-weight:600">${c.progress}%</span>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px">${c.title}</div>
+      <div style="font-size:11px;font-weight:600;color:${c.tagColor};margin-bottom:8px">${c.tag}</div>
+      <div class="prog-bar" style="margin-bottom:8px"><div class="prog-fill" style="width:${c.progress}%"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:#94a3b8">${c.lessons} уроков</span>
+        <button style="font-size:11px;color:#2563eb;font-weight:600;background:none;border:none;cursor:pointer">Продолжить</button>
+      </div>
+    </div>`).join('') || '<div style="color:#94a3b8;font-size:13px;padding:8px">Нет курсов</div>';
+
+  const frec = filter === 'all' ? coursesData.recommended : coursesData.recommended.filter(c => c.category === filter);
+  rec.innerHTML = frec.map(c => `
+    <div class="course-card">
+      <div style="width:40px;height:40px;border-radius:10px;background:${c.color};display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px">${c.icon}</div>
+      <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:8px">${c.title}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:11px;color:#94a3b8">${c.lessons}</span>
+        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:${c.lb};color:${c.lc}">${c.level}</span>
+      </div>
+      <button style="width:100%;padding:8px;border:1.5px solid #2563eb;color:#2563eb;border-radius:9px;font-size:12px;font-weight:600;background:none;cursor:pointer">Начать обучение</button>
+    </div>`).join('') || '<div style="color:#94a3b8;font-size:13px;padding:8px">Нет курсов</div>';
+}
+
+document.querySelectorAll('.filter-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderCourses(tab.dataset.filter);
+  });
+});
+
+// Инициализируем аватар по имени пользователя
+function updateUserUI(name, email) {
+  const initials = name ? name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2) : '?';
+  document.querySelectorAll('#sidebar-avatar, #profile-avatar').forEach(el => el.textContent = initials);
+  const nameEl = document.getElementById('sidebar-name');
+  const emailEl = document.getElementById('sidebar-email');
+  const profileName = document.getElementById('profile-name');
+  const profileEmail = document.getElementById('profile-email');
+  if (nameEl) nameEl.textContent = name || '—';
+  if (emailEl) emailEl.textContent = email || '—';
+  if (profileName) profileName.textContent = name || '—';
+  if (profileEmail) profileEmail.textContent = email || '—';
+  const sub = document.getElementById('page-subtitle');
+  if (sub) sub.textContent = `Добро пожаловать, ${name ? name.split(' ')[0] : ''} 👋`;
+}
+window.updateUserUI = updateUserUI;
+</script>
 
 </body>
 </html>
