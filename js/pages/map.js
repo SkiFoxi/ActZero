@@ -1277,10 +1277,5 @@ function initMap() {
 }
 
 // ========== DOM READY ==========
-document.addEventListener('DOMContentLoaded', () => {
-  if (typeof ymaps !== 'undefined') {
-    ymaps.ready(initMap);
-  } else {
-    console.error('Яндекс.Карты не загрузились');
-  }
-});
+// Инициализация карты управляется через lkabinet.js (navigateTo)
+// DOMContentLoaded здесь убран чтобы избежать двойной инициализации
