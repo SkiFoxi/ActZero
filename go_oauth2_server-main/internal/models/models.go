@@ -13,10 +13,15 @@ type Client struct {
 }
 
 type User struct {
-	ID        string    `json:"id" db:"id"`
-	Username  string    `json:"username" db:"username"`
-	Password  string    `json:"password" db:"password"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	ID               string    `json:"id" db:"id"`
+	Username         string    `json:"username" db:"username"`
+	Password         string    `json:"password" db:"password"`
+	FullName         *string   `json:"full_name,omitempty" db:"full_name"`
+	Phone            *string   `json:"phone,omitempty" db:"phone"`
+	EmailVerified    bool      `json:"email_verified" db:"email_verified"`
+	SubscriptionPlan string    `json:"subscription_plan" db:"subscription_plan"`
+	CreatedAt        time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt        *time.Time `json:"updated_at,omitempty" db:"updated_at"`
 }
 
 type AuthorizeRequest struct {

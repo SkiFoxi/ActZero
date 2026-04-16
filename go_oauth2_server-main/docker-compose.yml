@@ -1,115 +1,56 @@
 version: '3.8'
 
 services:
-  # OAuth2 Server
-  oauth2-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: oauth2-server
-    restart: unless-stopped
-    environment:
-      PORT: 8080
-      DATABASE_URL: postgres://oauth2_user:oauth2_password@postgres:5432/oauth2_db?sslmode=disable
-      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production-make-it-at-least-32-characters-long
-      TOKEN_EXPIRATION_MINUTES: 60
-      REFRESH_EXPIRATION_HOURS: 168
-      LOG_LEVEL: debug
-    ports:
-      - "8080:8080"
-    networks:
-      - oauth2-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
 
-  # PostgreSQL
   postgres:
     image: postgres:16-alpine
-    container_name: oauth2-postgres
+    container_name: auth_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_PASSWORD: root
-      POSTGRES_USER: root
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - POSTGRES_USER=auth_user
+      - POSTGRES_PASSWORD=auth_pass
+      - POSTGRES_DB=auth_db
     ports:
       - "5433:5432"
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
     networks:
-      - oauth2-network
+      - auth_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U oauth2_user -d oauth2_db"]
+      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_db"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
-  # Prometheus
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: oauth2-prometheus
+  oauth2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oauth2_server
     restart: unless-stopped
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-    networks:
-      - oauth2-network
-    profiles:
-      - monitoring
-
-  # Grafana
-  grafana:
-    image: grafana/grafana:latest
-    container_name: oauth2-grafana
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin
-      GF_USERS_ALLOW_SIGN_UP: "false"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - oauth2-network
-    profiles:
-      - monitoring
-
-   # Adminer для управления БД
-  adminer:
-    image: adminer:latest
-    container_name: oauth2-adminer
-    restart: unless-stopped
+      - PORT=8081
+      - DATABASE_URL=postgres://auth_user:auth_pass@postgres:5432/auth_db?sslmode=disable
+      - JWT_SECRET=supersecretkey12345678901234567890
+      - TOKEN_EXPIRATION_MINUTES=60
+      - REFRESH_EXPIRATION_HOURS=168
+      - LOG_LEVEL=info
     ports:
-      - "8081:8080"
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
-      - oauth2-network
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres
-    profiles:
-      - dev
+      - auth_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
-  postgres_data:
-  prometheus_data:
-  grafana_data:
+  auth_postgres_data:
 
 networks:
-  oauth2-network:
+  auth_network:
     driver: bridge

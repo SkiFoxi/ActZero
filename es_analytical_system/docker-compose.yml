@@ -1,9 +1,32 @@
 version: '3.8'
 
 services:
-  elasticsearch:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: analytical_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=analytical_user
+      - POSTGRES_PASSWORD=analytical_pass
+      - POSTGRES_DB=analytical_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - analytical_postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - analytical_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analytical_user -d analytical_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  opensearch:
     image: opensearchproject/opensearch:2.11.0
-    container_name: es_analytical_system
+    container_name: analytical_opensearch
+    restart: unless-stopped
     environment:
       - discovery.type=single-node
       - DISABLE_SECURITY_PLUGIN=true
@@ -18,9 +41,9 @@ services:
       - "9200:9200"
       - "9300:9300"
     volumes:
-      - es_data:/usr/share/opensearch/data
+      - analytical_es_data:/usr/share/opensearch/data
     networks:
-      - es_network
+      - analytical_network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 30s
@@ -29,47 +52,29 @@ services:
 
   kibana:
     image: opensearchproject/opensearch-dashboards:2.11.0
-    container_name: kibana_analytical_system
+    container_name: analytical_kibana
+    restart: unless-stopped
     environment:
-      - OPENSEARCH_HOSTS=http://elasticsearch:9200
+      - OPENSEARCH_HOSTS=http://opensearch:9200
       - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
     ports:
       - "5601:5601"
     depends_on:
-      elasticsearch:
+      opensearch:
         condition: service_healthy
     networks:
-      - es_network
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: postgres_analytical_system
-    environment:
-      - POSTGRES_USER=analytical_user
-      - POSTGRES_PASSWORD=analytical_pass
-      - POSTGRES_DB=analytical_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d
-    networks:
-      - es_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U analytical_user -d analytical_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - analytical_network
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: go_analytical_app
+    container_name: analytical_app
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_URL=http://opensearch:9200
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=analytical_user
@@ -80,37 +85,17 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      elasticsearch:
+      opensearch:
         condition: service_healthy
       postgres:
         condition: service_healthy
     networks:
-      - es_network
-
-  oauth2:
-    build:
-      context: ../go_oauth2_server-main
-      dockerfile: Dockerfile
-    container_name: oauth2_server
-    environment:
-      - PORT=8081
-      - DATABASE_URL=postgres://analytical_user:analytical_pass@postgres:5432/analytical_db?sslmode=disable
-      - JWT_SECRET=supersecretkey12345678901234567890
-      - TOKEN_EXPIRATION_MINUTES=60
-      - REFRESH_EXPIRATION_HOURS=168
-      - LOG_LEVEL=info
-    ports:
-      - "8081:8081"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - es_network
+      - analytical_network
 
 volumes:
-  es_data:
-  postgres_data:
+  analytical_postgres_data:
+  analytical_es_data:
 
 networks:
-  es_network:
+  analytical_network:
     driver: bridge

@@ -92,12 +92,14 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// ===== Инициализация модалок после загрузки modal.html =====
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(() => {
+// ===== Инициализация модалок =====
+// ИСПРАВЛЕНИЕ: вместо DOMContentLoaded + ненадёжного setTimeout
+// теперь это отдельная функция, которую вызывает index.html
+// строго ПОСЛЕ того как modal.html вставлен в DOM через fetch.
+window.initModalListeners = function() {
     const registerModal = document.getElementById('registerModal');
     if (!registerModal) {
-      console.error('modal.html не загружен');
+      console.error('modal.html не загружен — registerModal не найден');
       return;
     }
 
@@ -105,11 +107,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitRegister');
     if (submitBtn) {
       submitBtn.addEventListener('click', async () => {
-        const name = document.getElementById('regName')?.value.trim() || '';
-        const email = document.getElementById('regEmail')?.value.trim() || '';
-        const phone = document.getElementById('regPhone')?.value.trim() || '';
+        const name     = document.getElementById('regName')?.value.trim() || '';
+        const email    = document.getElementById('regEmail')?.value.trim() || '';
+        const phone    = document.getElementById('regPhone')?.value.trim() || '';
         const password = document.getElementById('regPassword')?.value || '';
-        const agree = document.getElementById('regAgree')?.checked || false;
+        const agree    = document.getElementById('regAgree')?.checked || false;
 
         if (!name || !email || !password) {
           alert('Пожалуйста, заполните имя, email и пароль');
@@ -129,7 +131,13 @@ document.addEventListener('DOMContentLoaded', function() {
           const regResponse = await fetch('http://localhost:8081/users', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ username: email, password, email })
+              body: JSON.stringify({
+                  username: email,
+                  password,
+                  email,
+                  full_name: name,
+                  phone: phone || undefined
+              })
           });
 
           if (!regResponse.ok) {
@@ -146,6 +154,14 @@ document.addEventListener('DOMContentLoaded', function() {
           });
 
           const tokenData = await tokenResponse.json();
+
+          if (!tokenData.access_token) {
+              // ИСПРАВЛЕНИЕ: раньше здесь было сообщение "войдите вручную",
+              // что путало пользователя. Теперь показываем конкретную ошибку.
+              alert('Ошибка входа после регистрации: ' + (tokenData.error_description || 'попробуйте ещё раз'));
+              return;
+          }
+
           localStorage.setItem('token', tokenData.access_token);
           closeModal();
           window.location.href = '/htmllist/lkabinet.html';
@@ -162,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginBtn = document.getElementById('submitLogin');
     if (loginBtn) {
       loginBtn.addEventListener('click', async () => {
-        const email = document.getElementById('loginEmail')?.value.trim();
+        const email    = document.getElementById('loginEmail')?.value.trim();
         const password = document.getElementById('loginPassword')?.value;
 
         if (!email || !password) {
@@ -254,19 +270,19 @@ document.addEventListener('DOMContentLoaded', function() {
     ].filter(Boolean);
     const strengthLabel = document.getElementById('strengthLabel');
     const levels = [
-      { color: 'bg-red-400', label: 'Слабый' },
-      { color: 'bg-orange-400', label: 'Средний' },
-      { color: 'bg-yellow-400', label: 'Хороший' },
-      { color: 'bg-green-500', label: 'Отличный' }
+      { color: 'bg-red-400',    label: 'Слабый'   },
+      { color: 'bg-orange-400', label: 'Средний'  },
+      { color: 'bg-yellow-400', label: 'Хороший'  },
+      { color: 'bg-green-500',  label: 'Отличный' }
     ];
 
     if (pwdInput) {
       pwdInput.addEventListener('input', () => {
         const v = pwdInput.value;
         let score = 0;
-        if (v.length >= 8) score++;
-        if (/[A-Z]/.test(v)) score++;
-        if (/[0-9]/.test(v)) score++;
+        if (v.length >= 8)          score++;
+        if (/[A-Z]/.test(v))        score++;
+        if (/[0-9]/.test(v))        score++;
         if (/[^A-Za-z0-9]/.test(v)) score++;
 
         bars.forEach((bar, i) => {
@@ -286,6 +302,4 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', openModal);
       }
     });
-
-  }, 100);
-});
+};
