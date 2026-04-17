@@ -577,3 +577,53 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 	h.writeJSONResponse(w, responseData, http.StatusOK)
 }
+
+// UpdateMe godoc
+// @Summary Обновление профиля текущего пользователя
+// @Description Изменение имени и статуса верификации почты
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /me [put]
+func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || len(authHeader) < 8 {
+		h.writeErrorResponse(w, "unauthorized", "Missing token", http.StatusUnauthorized)
+		return
+	}
+	tokenString := authHeader[7:]
+
+	response := h.validateJWTToken(tokenString)
+	if !response.Active {
+		h.writeErrorResponse(w, "unauthorized", "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		FullName      string `json:"full_name"`
+		EmailVerified bool   `json:"email_verified"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeErrorResponse(w, "invalid_request", "Invalid request format", http.StatusBadRequest)
+		return
+	}
+
+	var fullName *string
+	if req.FullName != "" {
+		fullName = &req.FullName
+	}
+
+	if err := h.store.UpdateUser(ctx, response.UserID, fullName, req.EmailVerified); err != nil {
+		h.logger.Error("Failed to update user", "error", err)
+		h.writeErrorResponse(w, "server_error", "Failed to update user", http.StatusInternalServerError)
+		return
+	}
+
+	h.logger.Info("User updated successfully", "user_id", response.UserID)
+	h.writeJSONResponse(w, map[string]interface{}{"status": "ok"}, http.StatusOK)
+}

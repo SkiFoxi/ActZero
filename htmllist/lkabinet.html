@@ -612,11 +612,76 @@
   <!-- ===== PAGE: PROFILE ===== -->
   <div id="page-profile" class="page-section content-area">
     <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:20px">Профиль</h2>
-    <div style="background:#fff;border:0.5px solid #e5e7eb;border-radius:14px;padding:24px;max-width:560px">
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
-        <div style="width:64px;height:64px;border-radius:14px;background:#2563eb;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700;flex-shrink:0" id="profile-avatar">?</div>
-        <div><div style="font-size:16px;font-weight:700;color:#0f172a" id="profile-name">Загрузка...</div><div style="font-size:12px;color:#94a3b8;margin-top:3px" id="profile-email">—</div><button style="margin-top:8px;font-size:12px;color:#2563eb;background:none;border:none;cursor:pointer;padding:0">Изменить фото</button></div>
+    <div style="max-width:560px;display:flex;flex-direction:column;gap:14px">
+
+      <!-- Карточка аватара -->
+      <div style="background:#fff;border:0.5px solid #e5e7eb;border-radius:14px;padding:20px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="width:64px;height:64px;border-radius:14px;background:#2563eb;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700;flex-shrink:0" id="profile-avatar">?</div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:#0f172a" id="profile-name">Загрузка...</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:3px" id="profile-email">—</div>
+            <div style="margin-top:6px;display:flex;align-items:center;gap:6px" id="profile-verified-badge"></div>
+          </div>
+        </div>
       </div>
+
+      <!-- Форма редактирования -->
+      <div style="background:#fff;border:0.5px solid #e5e7eb;border-radius:14px;padding:20px">
+        <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:16px">Редактировать профиль</div>
+
+        <!-- Имя -->
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px">Отображаемое имя</label>
+          <input
+            id="input-fullname"
+            type="text"
+            placeholder="Введите имя"
+            style="width:100%;padding:9px 12px;border:0.5px solid #e5e7eb;border-radius:9px;font-size:13px;color:#0f172a;outline:none;transition:border-color 0.15s;background:#f8fafc"
+            onfocus="this.style.borderColor='#2563eb';this.style.background='#fff'"
+            onblur="this.style.borderColor='#e5e7eb';this.style.background='#f8fafc'"
+          >
+        </div>
+
+        <!-- Email (только чтение) -->
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px">Email (логин)</label>
+          <input
+            id="input-email-readonly"
+            type="text"
+            disabled
+            style="width:100%;padding:9px 12px;border:0.5px solid #e5e7eb;border-radius:9px;font-size:13px;color:#94a3b8;background:#f8fafc;cursor:not-allowed"
+          >
+        </div>
+
+        <!-- Верификация почты -->
+        <div style="margin-bottom:20px;padding:14px;background:#f8fafc;border-radius:10px;border:0.5px solid #e5e7eb">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+            <input
+              type="checkbox"
+              id="input-email-verified"
+              style="width:16px;height:16px;margin-top:1px;accent-color:#2563eb;cursor:pointer;flex-shrink:0"
+            >
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#0f172a">Почта верифицирована</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:2px">Подтвердите, что у вас есть доступ к этому email-адресу</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Кнопка + статус -->
+        <div style="display:flex;align-items:center;gap:12px">
+          <button
+            id="profile-save-btn"
+            onclick="saveProfile()"
+            style="padding:9px 20px;background:#2563eb;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.15s"
+            onmouseover="this.style.background='#1d4ed8'"
+            onmouseout="this.style.background='#2563eb'"
+          >Сохранить</button>
+          <span id="profile-save-status" style="font-size:12px;color:#94a3b8"></span>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -707,5 +772,95 @@ function updateUserUI(name, email) {
 window.updateUserUI = updateUserUI;
 </script>
 
+<script>
+// ===== ПРОФИЛЬ: загрузка и сохранение =====
+
+function loadProfileForm(data) {
+  const nameInput = document.getElementById('input-fullname');
+  const emailInput = document.getElementById('input-email-readonly');
+  const verifiedCheck = document.getElementById('input-email-verified');
+  const badge = document.getElementById('profile-verified-badge');
+
+  if (nameInput) nameInput.value = data.full_name || '';
+  if (emailInput) emailInput.value = data.username || '';
+  if (verifiedCheck) verifiedCheck.checked = !!data.email_verified;
+
+  if (badge) {
+    if (data.email_verified) {
+      badge.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#15803d;background:#f0fdf4;padding:2px 8px;border-radius:20px">&#10003; Почта подтверждена</span>';
+    } else {
+      badge.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#92400e;background:#fffbeb;padding:2px 8px;border-radius:20px">&#9679; Почта не подтверждена</span>';
+    }
+  }
+}
+
+async function saveProfile() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  const btn = document.getElementById('profile-save-btn');
+  const status = document.getElementById('profile-save-status');
+  const fullName = document.getElementById('input-fullname')?.value.trim() || '';
+  const emailVerified = document.getElementById('input-email-verified')?.checked || false;
+
+  btn.disabled = true;
+  btn.textContent = 'Сохранение...';
+  status.textContent = '';
+  status.style.color = '#94a3b8';
+
+  try {
+    const res = await fetch('http://localhost:8081/me', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ full_name: fullName, email_verified: emailVerified })
+    });
+
+    if (!res.ok) throw new Error('server error');
+
+    // Обновляем имя/аватар в сайдбаре
+    if (typeof updateUserUI === 'function') {
+      const email = document.getElementById('input-email-readonly')?.value || '';
+      updateUserUI(fullName, email);
+    }
+
+    // Обновляем бейдж верификации
+    const badge = document.getElementById('profile-verified-badge');
+    if (badge) {
+      if (emailVerified) {
+        badge.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#15803d;background:#f0fdf4;padding:2px 8px;border-radius:20px">&#10003; Почта подтверждена</span>';
+      } else {
+        badge.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#92400e;background:#fffbeb;padding:2px 8px;border-radius:20px">&#9679; Почта не подтверждена</span>';
+      }
+    }
+
+    status.textContent = '✓ Сохранено';
+    status.style.color = '#15803d';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+
+  } catch (e) {
+    status.textContent = '✗ Ошибка сохранения';
+    status.style.color = '#dc2626';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Сохранить';
+  }
+}
+
+// Заполняем форму профиля после загрузки данных из /me
+// Делаем отдельный fetch — auth-token.js обновляет сайдбар, а мы форму
+window.addEventListener('load', function() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+  fetch('http://localhost:8081/me', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(r => r.json())
+  .then(data => loadProfileForm(data))
+  .catch(() => {});
+});
+</script>
 </body>
 </html>

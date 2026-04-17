@@ -250,3 +250,15 @@ func (s *PostgresStore) GetUserByID(ctx context.Context, id string) (*models.Use
 	}
 	return user, nil
 }
+func (s *PostgresStore) UpdateUser(ctx context.Context, id string, fullName *string, emailVerified bool) error {
+	query := `
+        UPDATE users
+        SET full_name = $1, email_verified = $2, updated_at = NOW()
+        WHERE id = $3
+    `
+	_, err := s.db.ExecContext(ctx, query, fullName, emailVerified, id)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+	return nil
+}
