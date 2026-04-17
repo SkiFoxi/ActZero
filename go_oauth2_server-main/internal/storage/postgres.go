@@ -88,10 +88,13 @@ func (s *PostgresStore) CreateUser(ctx context.Context, user *models.User) error
 	}
 
 	query := `
-        INSERT INTO users (id, username, password, created_at)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO users (id, username, password, full_name, phone, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6)
     `
-	_, err = s.db.ExecContext(ctx, query, user.ID, user.Username, string(hashedPassword), user.CreatedAt)
+	_, err = s.db.ExecContext(ctx, query,
+		user.ID, user.Username, string(hashedPassword),
+		user.FullName, user.Phone, user.CreatedAt,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
@@ -101,12 +104,14 @@ func (s *PostgresStore) CreateUser(ctx context.Context, user *models.User) error
 func (s *PostgresStore) GetUser(ctx context.Context, username string) (*models.User, error) {
 	user := &models.User{}
 	query := `
-        SELECT id, username, password, created_at
+        SELECT id, username, password, full_name, phone, email_verified, subscription_plan, created_at, updated_at
         FROM users
         WHERE username = $1
     `
 	err := s.db.QueryRowContext(ctx, query, username).Scan(
-		&user.ID, &user.Username, &user.Password, &user.CreatedAt,
+		&user.ID, &user.Username, &user.Password,
+		&user.FullName, &user.Phone, &user.EmailVerified,
+		&user.SubscriptionPlan, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
@@ -231,15 +236,29 @@ func (cs *ClientStore) Set(ctx context.Context, id string, client oauth2.ClientI
 func (s *PostgresStore) GetUserByID(ctx context.Context, id string) (*models.User, error) {
 	user := &models.User{}
 	query := `
-        SELECT id, username, password, created_at
+        SELECT id, username, password, full_name, phone, email_verified, subscription_plan, created_at, updated_at
         FROM users
         WHERE id = $1
     `
 	err := s.db.QueryRowContext(ctx, query, id).Scan(
-		&user.ID, &user.Username, &user.Password, &user.CreatedAt,
+		&user.ID, &user.Username, &user.Password,
+		&user.FullName, &user.Phone, &user.EmailVerified,
+		&user.SubscriptionPlan, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 	return user, nil
+}
+func (s *PostgresStore) UpdateUser(ctx context.Context, id string, fullName *string, emailVerified bool) error {
+	query := `
+        UPDATE users
+        SET full_name = $1, email_verified = $2, updated_at = NOW()
+        WHERE id = $3
+    `
+	_, err := s.db.ExecContext(ctx, query, fullName, emailVerified, id)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+	return nil
 }

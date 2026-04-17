@@ -16,8 +16,8 @@ import (
 
 	"go_oauth2_server/internal/config"
 	"go_oauth2_server/internal/handlers"
-	"go_oauth2_server/internal/storage"
 	"go_oauth2_server/internal/models"
+	"go_oauth2_server/internal/storage"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-migrate/migrate/v4"
@@ -157,7 +157,8 @@ func run() error {
 		r.HandleFunc("/clients", h.RegisterClient)
 		r.HandleFunc("/health", h.Health)
 		r.HandleFunc("/users", h.RegisterUser)
-		r.HandleFunc("/me", h.Me)
+		r.Get("/me", h.Me)
+		r.Put("/me", h.UpdateMe)
 		// Prometheus метрики
 		r.Handle("/metrics", promhttp.Handler())
 	})

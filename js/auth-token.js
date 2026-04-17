@@ -19,15 +19,49 @@ async function loadUserData() {
 
         const data = await response.json();
 
-        // Сайдбар
+        // Определяем отображаемое имя — full_name если есть, иначе username
+        const displayName = data.full_name || data.username;
+        const displayInitials = displayName
+            .split(' ')
+            .map(w => w[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+
+        // Сайдбар — имя
         const sidebarName = document.getElementById('sidebar-name');
+        if (sidebarName) sidebarName.textContent = displayName;
+
+        // Сайдбар — email (username)
         const sidebarEmail = document.getElementById('sidebar-email');
-        if (sidebarName) sidebarName.textContent = data.username;
         if (sidebarEmail) sidebarEmail.textContent = data.username;
 
-        // Приветствие
+        // Аватар — инициалы
+        const sidebarAvatar = document.getElementById('sidebar-avatar');
+        if (sidebarAvatar) sidebarAvatar.textContent = displayInitials;
+
+        // Аватар в профиле
+        const profileAvatar = document.getElementById('profile-avatar');
+        if (profileAvatar) profileAvatar.textContent = displayInitials;
+
+        // Профиль — имя и email
+        const profileName = document.getElementById('profile-name');
+        if (profileName) profileName.textContent = displayName;
+        const profileEmail = document.getElementById('profile-email');
+        if (profileEmail) profileEmail.textContent = data.username;
+
+        // Приветствие в топбаре
         const subtitle = document.getElementById('page-subtitle');
-        if (subtitle) subtitle.textContent = `Добро пожаловать, ${data.username} 👋`;
+        if (subtitle) {
+            const firstName = displayName.split(' ')[0];
+            subtitle.textContent = `Добро пожаловать, ${firstName} 👋`;
+        }
+
+        // Подписка
+        if (data.subscription_plan) {
+            const planEl = document.getElementById('subscription-plan');
+            if (planEl) planEl.textContent = data.subscription_plan === 'pro' ? 'Pro' : 'Free';
+        }
 
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);

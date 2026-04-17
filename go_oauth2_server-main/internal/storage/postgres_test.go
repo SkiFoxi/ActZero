@@ -12,7 +12,7 @@ import (
 
 	"go_oauth2_server/internal/models"
 
-	"github.com/go-oauth2/oauth2/v4"
+
 	oauthModels "github.com/go-oauth2/oauth2/v4/models"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
@@ -263,9 +263,8 @@ func TestClientStore_GetByID(t *testing.T) {
 	defer cleanupTestDB(db)
 
 	clientStore := &ClientStore{
-		db:      db,
-		clients: make(map[string]oauth2.ClientInfo),
-		logger:  slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		db:     db,
+		logger: slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 
 	ctx := context.Background()
