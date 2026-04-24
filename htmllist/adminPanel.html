@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ActZero — Админ панель</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Яндекс.Карты API -->
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=009332ba-3ebb-4304-b4a6-5094de979623&suggest_apikey=5775275f-299b-4987-b802-cc3fbb3fa568&lang=ru_RU" type="text/javascript"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    * { font-family: 'Manrope', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f5f6fa; overflow: hidden; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 240px; min-height: 100vh;
+      background: #0f1623;
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; z-index: 40;
+    }
+    .sidebar-logo {
+      padding: 22px 20px 18px;
+      border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-logo-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+    .sidebar-logo-sub  { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+    .sidebar-badge {
+      display: inline-block; margin-top: 8px; padding: 3px 8px;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      color: #fff; font-size: 10px; font-weight: 700;
+      border-radius: 6px; letter-spacing: 0.5px;
+    }
+
+    .sidebar-nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 11px;
+      padding: 10px 12px; border-radius: 10px;
+      cursor: pointer; font-size: 13px; font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      transition: all 0.15s ease; text-decoration: none;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .sidebar-link:hover  { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+    .sidebar-link.active { background: rgba(255,255,255,0.1);  color: #fff; }
+    .sidebar-section {
+      font-size: 10px; color: rgba(255,255,255,0.22);
+      padding: 12px 12px 4px; letter-spacing: 0.8px; text-transform: uppercase;
+    }
+
+    .sidebar-user {
+      padding: 14px 16px;
+      border-top: 0.5px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+    }
+    .sidebar-uname  { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 600; }
+    .sidebar-uemail { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 1px; }
+    .sidebar-logout {
+      margin-left: auto; background: none; border: none;
+      color: rgba(255,255,255,0.3); cursor: pointer; font-size: 16px; padding: 4px;
+    }
+    .sidebar-logout:hover { color: rgba(255,255,255,0.7); }
+
+    /* ===== MAIN LAYOUT ===== */
+    .main {
+      margin-left: 240px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #eef0f4;
+      padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .topbar h1 { font-size: 17px; font-weight: 700; }
+    .topbar-sub { font-size: 11px; color: #9aa0aa; margin-top: 1px; }
+
+    .topbar-stat {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-radius: 999px;
+      background: #f0f4ff; color: #2563eb;
+      font-size: 12px; font-weight: 600;
+    }
+
+    /* ===== WORKSPACE ===== */
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 16px;
+      padding: 16px;
+      min-height: 0;
+    }
+
+    .map-wrap {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      position: relative;
+    }
+    #map { width: 100%; height: 100%; }
+
+    .map-hint {
+      position: absolute; top: 16px; left: 16px; z-index: 10;
+      background: rgba(15,22,35,0.92);
+      color: #fff; padding: 10px 14px;
+      border-radius: 12px; font-size: 12px;
+      display: flex; align-items: center; gap: 8px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* ===== ПРАВАЯ ПАНЕЛЬ ===== */
+    .panel {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid #eef0f4;
+    }
+    .panel-title { font-size: 14px; font-weight: 700; }
+    .panel-count {
+      display: inline-block; margin-left: 8px;
+      background: #2563eb; color: #fff;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 999px;
+    }
+
+    .panel-actions {
+      padding: 12px 20px;
+      display: flex; gap: 8px;
+      border-bottom: 1px solid #eef0f4;
+    }
+    .btn {
+      flex: 1;
+      padding: 9px 12px; border-radius: 10px;
+      font-size: 12px; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary   { background: #2563eb; color: #fff; }
+    .btn-primary:hover   { background: #1d4ed8; }
+    .btn-secondary { background: #f0f2f7; color: #374151; }
+    .btn-secondary:hover { background: #e4e7ec; }
+    .btn-danger-outline {
+      background: #fff; color: #dc2626;
+      border: 1px solid #fee2e2;
+    }
+    .btn-danger-outline:hover { background: #fef2f2; }
+
+    .points-list {
+      flex: 1; overflow-y: auto; padding: 8px;
+    }
+    .point-item {
+      padding: 12px 14px; margin-bottom: 6px;
+      border-radius: 12px; cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.12s;
+    }
+    .point-item:hover { background: #f7f8fb; border-color: #e9ecf2; }
+    .point-item.selected { background: #eff6ff; border-color: #bfdbfe; }
+
+    .point-title {
+      font-size: 13px; font-weight: 600; color: #111827;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .point-address {
+      font-size: 11px; color: #6b7280;
+      margin-top: 3px; line-height: 1.4;
+    }
+    .point-coords {
+      font-size: 10px; color: #9ca3af;
+      margin-top: 4px; font-family: ui-monospace, monospace;
+    }
+    .point-meta {
+      font-size: 10px; color: #6b7280;
+      margin-top: 4px;
+    }
+    .point-meta .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      background: #eef2ff; color: #4338ca;
+      border-radius: 6px;
+      margin-right: 3px;
+      font-weight: 600;
+    }
+    .point-actions {
+      margin-top: 8px; display: flex; gap: 6px;
+    }
+    .point-btn {
+      font-size: 11px; padding: 4px 9px;
+      border-radius: 6px; border: none; cursor: pointer;
+      background: #f0f2f7; color: #374151;
+    }
+    .point-btn:hover { background: #e4e7ec; }
+    .point-btn.danger { background: #fef2f2; color: #dc2626; }
+    .point-btn.danger:hover { background: #fee2e2; }
+
+    .empty-state {
+      padding: 40px 20px; text-align: center;
+      color: #9ca3af; font-size: 12px;
+    }
+    .empty-state .ico { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
+
+    /* ===== МОДАЛКА РЕДАКТИРОВАНИЯ ===== */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(15,22,35,0.5);
+      backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 20px;
+      width: 100%; max-width: 560px;
+      max-height: 90vh; overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .modal-sub   { font-size: 12px; color: #6b7280; margin-bottom: 18px; }
+    .field { margin-bottom: 12px; }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .field label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: #4b5563; margin-bottom: 5px;
+    }
+    .field input, .field textarea {
+      width: 100%; padding: 9px 12px;
+      border: 1px solid #e5e7eb; border-radius: 10px;
+      font-size: 13px; font-family: inherit;
+      background: #fafbfc;
+    }
+    .field input:focus, .field textarea:focus {
+      outline: none; border-color: #2563eb; background: #fff;
+    }
+    .field textarea { resize: vertical; min-height: 64px; }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6b7280;
+      margin: 16px 0 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #eef0f4;
+    }
+    .modal-footer { display: flex; gap: 8px; margin-top: 18px; }
+    .hint { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #0f1623; color: #fff;
+      padding: 12px 20px; border-radius: 12px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+      z-index: 200;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: #dc2626; }
+
+    /* Loader overlay */
+    .loader-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(255,255,255,0.92);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: #374151; font-weight: 600;
+    }
+    .loader-overlay.hidden { display: none; }
+
+    @media (max-width: 900px) {
+      .workspace { grid-template-columns: 1fr; }
+      .panel { max-height: 45vh; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Быстрая проверка — есть ли токен вообще -->
+<script>
+  (function () {
+    if (!localStorage.getItem('token')) window.location.replace('/index.html');
+  })();
+</script>
+
+<!-- Оверлей до проверки прав -->
+<div class="loader-overlay" id="authLoader">Проверка прав доступа…</div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-title">ActZero</div>
+    <div class="sidebar-logo-sub">Панель управления</div>
+    <span class="sidebar-badge">ADMIN</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="sidebar-link active"><span>🗺️</span> Метки на карте</button>
+    <button class="sidebar-link" onclick="alert('В разработке')"><span>👥</span> Пользователи</button>
+    <button class="sidebar-link" onclick="alert('В разработке')"><span>📊</span> Статистика</button>
+
+    <div class="sidebar-section">Навигация</div>
+    <button class="sidebar-link" onclick="window.location.href='/index.html'"><span>🌐</span> На главную</button>
+  </nav>
+
+  <div class="sidebar-user">
+    <div class="sidebar-avatar">AD</div>
+    <div>
+      <div class="sidebar-uname">Администратор</div>
+      <div class="sidebar-uemail" id="adminUsername">admin</div>
+    </div>
+    <button class="sidebar-logout" title="Выйти" onclick="logout()">↩</button>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+  <header class="topbar">
+    <div>
+      <h1>Управление метками</h1>
+      <div class="topbar-sub">Кликните по карте, чтобы добавить новую точку</div>
+    </div>
+    <div class="topbar-stat">
+      <span>📍</span>
+      <span>Всего меток: <b id="totalCount">0</b></span>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <div class="map-wrap">
+      <div class="map-hint">
+        <span>💡</span>
+        <span>Клик по карте = новая метка</span>
+      </div>
+      <div id="map"></div>
+    </div>
+
+    <aside class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Список меток</span>
+        <span class="panel-count" id="panelCount">0</span>
+      </div>
+
+      <div class="panel-actions">
+        <button class="btn btn-secondary" onclick="reloadAll()">🔄 Обновить</button>
+        <button class="btn btn-danger-outline" onclick="clearAllConfirm()">Очистить</button>
+      </div>
+
+      <div class="points-list" id="pointsList">
+        <div class="empty-state">
+          <div class="ico">🗺️</div>
+          <div>Пока нет ни одной метки.<br>Кликните по карте, чтобы добавить.</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- ===== МОДАЛКА ===== -->
+<div class="modal-backdrop" id="editModal">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Параметры метки</div>
+    <div class="modal-sub" id="modalSub">Заполните все поля и сохраните. Адрес/город/регион подставлены автоматически — при необходимости поправьте вручную.</div>
+
+    <div class="section-title">Основное</div>
+    <div class="field">
+      <label>Название</label>
+      <input type="text" id="fName" placeholder="Например: Точка на Тверской">
+    </div>
+    <div class="field">
+      <label>Адрес</label>
+      <input type="text" id="fAddress" placeholder="Заполняется автоматически">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Город</label>
+        <input type="text" id="fCity">
+      </div>
+      <div class="field">
+        <label>Регион</label>
+        <input type="text" id="fRegion">
+      </div>
+    </div>
+    <div class="field">
+      <label>Описание</label>
+      <textarea id="fDescription" placeholder="Короткое описание места"></textarea>
+    </div>
+
+    <div class="section-title">Бизнес</div>
+    <div class="field">
+      <label>Типы бизнеса (через запятую)</label>
+      <input type="text" id="fBusinessTypes" placeholder="cafe, restaurant">
+      <div class="hint">Например: cafe, restaurant, shop, gym</div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Traffic score (0–10)</label>
+        <input type="number" id="fTrafficScore" min="0" max="10" step="0.1" value="5">
+      </div>
+      <div class="field">
+        <label>Competition density (0–10)</label>
+        <input type="number" id="fCompetitionDensity" min="0" max="10" step="0.1" value="5">
+      </div>
+    </div>
+
+    <div class="section-title">Демография</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Возрастная группа</label>
+        <input type="text" id="fAgeGroup" value="26-35">
+      </div>
+      <div class="field">
+        <label>Средний доход</label>
+        <input type="number" id="fAverageIncome" value="75000">
+      </div>
+    </div>
+    <div class="field">
+      <label>Интересы (через запятую)</label>
+      <input type="text" id="fInterests" placeholder="food, technology">
+    </div>
+    <div class="field">
+      <label>Плотность населения (чел./км²)</label>
+      <input type="number" id="fPopulationDensity" value="5000">
+    </div>
+
+    <div class="section-title">Координаты</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Широта (lat)</label>
+        <input type="number" id="fLat" step="0.000001" readonly>
+      </div>
+      <div class="field">
+        <label>Долгота (lon)</label>
+        <input type="number" id="fLon" step="0.000001" readonly>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEdit()">Отмена</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ========== КОНФИГ ==========
+  const API_BASE  = 'http://localhost:8080';   // es_analytical_system
+  const AUTH_BASE = 'http://localhost:8081';   // go_oauth2_server
+
+  // ========== ГЛОБАЛЬНЫЕ ==========
+  let locations = [];
+  let map;
+  let placemarks = {};
+  let editingLocation = null;       // null — новая, иначе — редактируемая
+
+  // ========== ПРОВЕРКА РОЛИ ==========
+  async function ensureAdmin() {
+    const token = localStorage.getItem('token');
+    if (!token) { window.location.replace('/index.html'); return false; }
+    try {
+      const resp = await fetch(`${AUTH_BASE}/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resp.status === 401 || resp.status === 403) {
+        localStorage.removeItem('token');
+        window.location.replace('/index.html');
+        return false;
+      }
+      if (!resp.ok) { alert('Сервис авторизации недоступен'); return false; }
+      const me = await resp.json();
+      if (me.username !== 'admin') {
+        window.location.replace('/htmllist/lkabinet.html');
+        return false;
+      }
+      document.getElementById('adminUsername').textContent = me.username;
+      return true;
+    } catch (e) {
+      alert('Не удалось проверить права доступа: ' + e.message);
+      return false;
+    }
+  }
+
+  // ========== ИНИЦИАЛИЗАЦИЯ ==========
+  (async function init() {
+    const ok = await ensureAdmin();
+    if (!ok) return;
+
+    document.getElementById('authLoader').classList.add('hidden');
+
+    await new Promise(resolve => ymaps.ready(resolve));
+    map = new ymaps.Map('map', {
+      center: [55.751244, 37.618423],
+      zoom: 10,
+      controls: ['zoomControl', 'searchControl']
+    });
+    map.events.add('click', e => startAddLocation(e.get('coords')));
+
+    await reloadAll();
+  })();
+
+  // ========== API ==========
+  async function apiGetAll() {
+    const resp = await fetch(`${API_BASE}/locations`);
+    if (!resp.ok) throw new Error(`GET /locations → ${resp.status}`);
+    const data = await resp.json();
+    return Array.isArray(data.locations) ? data.locations : [];
+  }
+
+  async function apiCreateOrUpdate(loc) {
+    const resp = await fetch(`${API_BASE}/locations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(loc)
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`POST /locations → ${resp.status} ${text}`);
+    }
+    return resp.json();
+  }
+
+  async function apiDelete(id) {
+    const resp = await fetch(`${API_BASE}/locations/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (resp.status === 404) return;
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`DELETE /locations/${id} → ${resp.status} ${text}`);
+    }
+  }
+
+  // ========== ЗАГРУЗКА ==========
+  async function reloadAll() {
+    try {
+      locations = await apiGetAll();
+      Object.values(placemarks).forEach(pm => map.geoObjects.remove(pm));
+      placemarks = {};
+      locations.forEach(drawPlacemark);
+      renderList();
+    } catch (err) {
+      console.error(err);
+      toast('Не удалось загрузить метки', true);
+    }
+  }
+
+  // ========== ДОБАВЛЕНИЕ (клик по карте) ==========
+  async function startAddLocation(coords) {
+    try {
+      const res = await ymaps.geocode(coords, { results: 1 });
+      const geo = res.geoObjects.get(0);
+      const meta = geo ? parseMeta(geo) : {};
+
+      editingLocation = null;
+      document.getElementById('modalTitle').textContent = 'Новая метка';
+      document.getElementById('modalSub').textContent   = 'Заполните все поля и сохраните.';
+      setField('fName', `Локация ${locations.length + 1}`);
+      setField('fAddress', meta.address || '');
+      setField('fCity', meta.city || '');
+      setField('fRegion', meta.region || '');
+      setField('fDescription', '');
+      setField('fBusinessTypes', 'cafe, restaurant');
+      setField('fTrafficScore', 5);
+      setField('fCompetitionDensity', 5);
+      setField('fAgeGroup', '26-35');
+      setField('fAverageIncome', 75000);
+      setField('fInterests', 'food, technology');
+      setField('fPopulationDensity', 5000);
+      setField('fLat', coords[0].toFixed(6));
+      setField('fLon', coords[1].toFixed(6));
+
+      openEdit();
+    } catch (err) {
+      toast('Ошибка геокодирования', true);
+    }
+  }
+
+  function parseMeta(geo) {
+    const p = geo.properties;
+    const address = p.get('text') || '';
+    const components = p.get('metaDataProperty.GeocoderMetaData.Address.Components') || [];
+    let city = '', region = '';
+    for (const c of components) {
+      if (!city && (c.kind === 'locality' || c.kind === 'province')) city = c.name;
+      if (!region && c.kind === 'province') region = c.name;
+    }
+    return { address, city, region };
+  }
+
+  // ========== ОТРИСОВКА МЕТКИ ==========
+  function drawPlacemark(loc) {
+    if (!loc || !loc.coordinates) return;
+    const pm = new ymaps.Placemark(
+      [loc.coordinates.lat, loc.coordinates.lon],
+      {
+        balloonContentHeader: escapeHtml(loc.name || 'Локация'),
+        balloonContentBody:   `<div style="font-size:13px">${escapeHtml(loc.address || '')}</div>`,
+        hintContent:          escapeHtml(loc.name || '')
+      },
+      { preset: 'islands#blueDotIcon' }
+    );
+    placemarks[loc.id] = pm;
+    map.geoObjects.add(pm);
+  }
+
+  function removePlacemark(id) {
+    if (placemarks[id]) {
+      map.geoObjects.remove(placemarks[id]);
+      delete placemarks[id];
+    }
+  }
+
+  // ========== СПИСОК ==========
+  function renderList() {
+    const list = document.getElementById('pointsList');
+    document.getElementById('totalCount').textContent = locations.length;
+    document.getElementById('panelCount').textContent = locations.length;
+
+    if (locations.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="ico">🗺️</div>
+          <div>Пока нет ни одной метки.<br>Кликните по карте, чтобы добавить.</div>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = locations.map(loc => {
+      const bt = Array.isArray(loc.business_types_suitable) ? loc.business_types_suitable : [];
+      const btBadges = bt.slice(0, 3).map(t => `<span class="badge">${escapeHtml(t)}</span>`).join('');
+      const lat = loc.coordinates ? Number(loc.coordinates.lat).toFixed(5) : '—';
+      const lon = loc.coordinates ? Number(loc.coordinates.lon).toFixed(5) : '—';
+      return `
+      <div class="point-item" onclick="focusOn('${escapeAttr(loc.id)}')">
+        <div class="point-title">📍 ${escapeHtml(loc.name || 'Без названия')}</div>
+        <div class="point-address">${escapeHtml(loc.address || '—')}</div>
+        <div class="point-coords">${lat}, ${lon}</div>
+        <div class="point-meta">${btBadges}${loc.traffic_score != null ? `<span class="badge">TS ${Number(loc.traffic_score).toFixed(1)}</span>` : ''}</div>
+        <div class="point-actions">
+          <button class="point-btn" onclick="event.stopPropagation(); openEditExisting('${escapeAttr(loc.id)}')">✏️ Изменить</button>
+          <button class="point-btn danger" onclick="event.stopPropagation(); removeLocation('${escapeAttr(loc.id)}')">🗑 Удалить</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function focusOn(id) {
+    const loc = locations.find(l => l.id === id);
+    if (!loc || !loc.coordinates) return;
+    map.setCenter([loc.coordinates.lat, loc.coordinates.lon], 15, { duration: 300 });
+    if (placemarks[id]) placemarks[id].balloon.open();
+    document.querySelectorAll('.point-item').forEach(el => el.classList.remove('selected'));
+    if (event && event.currentTarget) event.currentTarget.classList.add('selected');
+  }
+
+  // ========== УДАЛЕНИЕ ==========
+  async function removeLocation(id) {
+    if (!confirm('Удалить эту метку?')) return;
+    try {
+      await apiDelete(id);
+      locations = locations.filter(l => l.id !== id);
+      removePlacemark(id);
+      renderList();
+      toast('Метка удалена');
+    } catch (err) {
+      console.error(err);
+      toast('Не удалось удалить метку', true);
+    }
+  }
+
+  async function clearAllConfirm() {
+    if (locations.length === 0) return;
+    if (!confirm(`Удалить ВСЕ ${locations.length} меток? Действие нельзя отменить.`)) return;
+
+    const toRemove = [...locations];
+    let failed = 0;
+    for (const loc of toRemove) {
+      try { await apiDelete(loc.id); } catch (e) { failed++; }
+    }
+    await reloadAll();
+    if (failed === 0) toast('Все метки удалены');
+    else toast(`Удалено с ошибками: ${failed}`, true);
+  }
+
+  // ========== РЕДАКТИРОВАНИЕ ==========
+  function openEditExisting(id) {
+    const loc = locations.find(l => l.id === id);
+    if (!loc) return;
+    editingLocation = loc;
+
+    document.getElementById('modalTitle').textContent = 'Редактировать метку';
+    document.getElementById('modalSub').textContent   = 'Измените данные и сохраните.';
+
+    const d = loc.demographics || {};
+    setField('fName',               loc.name || '');
+    setField('fAddress',            loc.address || '');
+    setField('fCity',               loc.city || '');
+    setField('fRegion',             loc.region || '');
+    setField('fDescription',        loc.description || '');
+    setField('fBusinessTypes',      (loc.business_types_suitable || []).join(', '));
+    setField('fTrafficScore',       loc.traffic_score ?? 5);
+    setField('fCompetitionDensity', loc.competition_density ?? 5);
+    setField('fAgeGroup',           d.age_group || '26-35');
+    setField('fAverageIncome',      d.average_income ?? 75000);
+    setField('fInterests',          (d.interests || []).join(', '));
+    setField('fPopulationDensity',  d.population_density ?? 5000);
+    setField('fLat',                loc.coordinates ? Number(loc.coordinates.lat).toFixed(6) : '');
+    setField('fLon',                loc.coordinates ? Number(loc.coordinates.lon).toFixed(6) : '');
+
+    openEdit();
+  }
+
+  function openEdit()  { document.getElementById('editModal').classList.add('open'); }
+  function closeEdit() {
+    editingLocation = null;
+    document.getElementById('editModal').classList.remove('open');
+  }
+
+  async function saveEdit() {
+    const lat = parseFloat(document.getElementById('fLat').value);
+    const lon = parseFloat(document.getElementById('fLon').value);
+    if (!isFinite(lat) || !isFinite(lon)) {
+      toast('Нет координат — кликните по карте заново', true);
+      return;
+    }
+
+    const name = document.getElementById('fName').value.trim();
+    if (!name) { toast('Укажите название', true); return; }
+
+    const payload = {
+      id: editingLocation ? editingLocation.id : '',
+      name: name,
+      address: document.getElementById('fAddress').value.trim() || 'Не определён',
+      coordinates: { lat, lon },
+      region: document.getElementById('fRegion').value.trim() || 'Не определён',
+      city:   document.getElementById('fCity').value.trim()   || 'Не определён',
+      description: document.getElementById('fDescription').value.trim(),
+      business_types_suitable: splitCsv('fBusinessTypes'),
+      traffic_score:       parseFloat(document.getElementById('fTrafficScore').value)       || 0,
+      competition_density: parseFloat(document.getElementById('fCompetitionDensity').value) || 0,
+      demographics: {
+        age_group:          document.getElementById('fAgeGroup').value.trim() || '26-35',
+        average_income:     parseFloat(document.getElementById('fAverageIncome').value) || 0,
+        interests:          splitCsv('fInterests'),
+        population_density: parseFloat(document.getElementById('fPopulationDensity').value) || 0
+      }
+    };
+    if (editingLocation && editingLocation.created_at) {
+      payload.created_at = editingLocation.created_at;
+    }
+
+    try {
+      const saved = await apiCreateOrUpdate(payload);
+      const idx = locations.findIndex(l => l.id === saved.id);
+      if (idx >= 0) {
+        locations[idx] = saved;
+        removePlacemark(saved.id);
+      } else {
+        locations.push(saved);
+      }
+      drawPlacemark(saved);
+      renderList();
+      closeEdit();
+      toast(idx >= 0 ? 'Метка обновлена' : 'Метка добавлена');
+    } catch (err) {
+      console.error(err);
+      toast('Ошибка сохранения', true);
+    }
+  }
+
+  // ========== УТИЛИТЫ ==========
+  function setField(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val == null ? '' : val;
+  }
+  function splitCsv(id) {
+    return document.getElementById(id).value
+      .split(',').map(s => s.trim()).filter(Boolean);
+  }
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+  }
+  function escapeAttr(s) { return escapeHtml(s).replace(/`/g, '&#96;'); }
+  function toast(msg, isError = false) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.toggle('error', isError);
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2200);
+  }
+  function logout() {
+    if (!confirm('Выйти из админ-панели?')) return;
+    localStorage.removeItem('token');
+    window.location.href = '/index.html';
+  }
+
+  // глобальные ссылки для onclick из HTML
+  window.reloadAll        = reloadAll;
+  window.focusOn          = focusOn;
+  window.openEditExisting = openEditExisting;
+  window.removeLocation   = removeLocation;
+  window.clearAllConfirm  = clearAllConfirm;
+  window.closeEdit        = closeEdit;
+  window.saveEdit         = saveEdit;
+  window.logout           = logout;
+</script>
+
+</body>
+</html>

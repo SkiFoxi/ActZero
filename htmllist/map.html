@@ -102,6 +102,13 @@
 </div><!-- /main-content -->
 
 <script src="/js/pages/map.js"></script>
+<script>
+  // Самостоятельная инициализация, если страница открыта как отдельная
+  // (а не через роутер lkabinet.js, который сам вызывает initMap).
+  if (typeof ymaps !== 'undefined' && typeof initMap === 'function') {
+    ymaps.ready(() => initMap());
+  }
+</script>
 
 </body>
 </html>

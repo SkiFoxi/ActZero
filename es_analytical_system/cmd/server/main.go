@@ -109,9 +109,38 @@ func main() {
 
 	// Настройка роутера
 	router := mux.NewRouter()
+
+	// Настройка CORS — ОБЯЗАТЕЛЬНО ДО регистрации маршрутов
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	// Явные OPTIONS-обработчики для preflight запросов
+	router.HandleFunc("/locations", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Methods("OPTIONS")
+	router.HandleFunc("/locations/{id}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Methods("OPTIONS")
+	router.HandleFunc("/locations/recommend", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Methods("OPTIONS")
+
 	router.HandleFunc("/health", h.HealthCheck).Methods("GET")
 	router.HandleFunc("/locations/recommend", h.RecommendLocations).Methods("POST")
+	router.HandleFunc("/locations", h.ListLocations).Methods("GET")
+	router.HandleFunc("/locations", h.CreateLocation).Methods("POST")
 	router.HandleFunc("/locations/{id}", h.GetLocation).Methods("GET")
+	router.HandleFunc("/locations/{id}", h.DeleteLocation).Methods("DELETE")
 	router.HandleFunc("/business-types", h.GetBusinessTypes).Methods("GET")
 	router.HandleFunc("/regions", h.GetRegions).Methods("GET")
 	router.HandleFunc("/readiness", h.GetReadiness).Methods("GET")
@@ -125,20 +154,6 @@ func main() {
 		httpSwagger.DocExpansion("none"),
 		httpSwagger.DomID("swagger-ui"),
 	))
-
-	// Настройка CORS
-	router.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-			if r.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
-	})
 
 	// Настройка сервера
 	srv := &http.Server{
