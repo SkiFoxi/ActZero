@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -395,4 +396,144 @@ func (h *Handlers) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"status": "ok",
 	})
+}
+
+// CreateLocation обрабатывает POST запрос на создание или обновление локации.
+// Принимает Location в теле запроса. Если ID не задан, генерируется автоматически.
+// Если локация с таким ID уже существует — она будет перезаписана (upsert).
+// Используется админ-панелью для добавления меток на карту.
+// Эндпоинт: POST /locations
+//
+// @Summary      Создать/обновить локацию
+// @Description  Создаёт новую или обновляет существующую локацию в индексе. Используется админ-панелью.
+// @Tags         locations
+// @Accept       json
+// @Produce      json
+// @Param        request  body      models.Location  true  "Локация"
+// @Success      200      {object}  models.Location
+// @Failure      400      {object}  map[string]string  "Неверный запрос"
+// @Failure      500      {object}  map[string]string  "Внутренняя ошибка сервера"
+// @Router       /locations [post]
+func (h *Handlers) CreateLocation(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var loc models.Location
+	if err := json.NewDecoder(r.Body).Decode(&loc); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Автогенерация ID, если не передан
+	if loc.ID == "" {
+		loc.ID = fmt.Sprintf("loc_%d", time.Now().UnixNano())
+	}
+
+	now := time.Now().UTC()
+	if loc.CreatedAt.IsZero() {
+		loc.CreatedAt = now
+	}
+	loc.UpdatedAt = now
+
+	if err := h.esStorage.IndexLocation(r.Context(), &loc); err != nil {
+		log.Printf("Error creating location: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(loc); err != nil {
+		log.Printf("Error encoding response: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+// DeleteLocation обрабатывает DELETE запрос на удаление локации по ID.
+// Используется админ-панелью.
+// Эндпоинт: DELETE /locations/{id}
+//
+// @Summary      Удалить локацию
+// @Description  Удаляет локацию по её идентификатору. Используется админ-панелью.
+// @Tags         locations
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string  true  "Идентификатор локации"
+// @Success      200  {object}  map[string]string
+// @Failure      404  {object}  map[string]string  "Локация не найдена"
+// @Failure      500  {object}  map[string]string  "Внутренняя ошибка сервера"
+// @Router       /locations/{id} [delete]
+func (h *Handlers) DeleteLocation(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		http.Error(w, "Location ID is required", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.esStorage.DeleteLocation(r.Context(), id); err != nil {
+		if err.Error() == "location not found" {
+			http.Error(w, "Location not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error deleting location: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "ok",
+		"id":     id,
+	})
+}
+
+// ListLocations обрабатывает GET запрос на получение всех локаций.
+// Используется пользовательской картой для отрисовки всех меток.
+// Эндпоинт: GET /locations
+//
+// @Summary      Получить все локации
+// @Description  Возвращает все локации из индекса. Используется пользовательской картой для отрисовки меток.
+// @Tags         locations
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  models.RecommendResponse
+// @Failure      500  {object}  map[string]string  "Внутренняя ошибка сервера"
+// @Router       /locations [get]
+func (h *Handlers) ListLocations(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	locations, err := h.esStorage.ListAllLocations(r.Context(), 1000)
+	if err != nil {
+		log.Printf("Error listing locations: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	locationValues := make([]models.Location, len(locations))
+	for i, loc := range locations {
+		locationValues[i] = *loc
+	}
+
+	response := models.RecommendResponse{
+		Locations: locationValues,
+		Total:     len(locationValues),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("Error encoding response: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 }

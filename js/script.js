@@ -203,8 +203,27 @@ window.initModalListeners = function() {
           }
 
           localStorage.setItem('token', tokenData.access_token);
+
+          // Определяем куда редиректить: admin → в админ-панель, иначе в личный кабинет.
+          // Для этого спрашиваем /me и смотрим username.
+          let redirectUrl = '/htmllist/lkabinet.html';
+          try {
+            const meResp = await fetch('http://localhost:8081/me', {
+              headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+            });
+            if (meResp.ok) {
+              const me = await meResp.json();
+              if (me.username === 'admin') {
+                redirectUrl = '/htmllist/adminPanel.html';
+              }
+            }
+          } catch (e) {
+            // если /me недоступен — просто идём в обычный кабинет
+            console.warn('Не удалось получить профиль для определения роли', e);
+          }
+
           closeLoginModal();
-          window.location.href = '/htmllist/lkabinet.html';
+          window.location.href = redirectUrl;
         } catch (error) {
           alert('Ошибка соединения с сервером');
         } finally {

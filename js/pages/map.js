@@ -2,99 +2,56 @@
 const DEFAULT_MARKER_IMAGE = '/video/Ai_image.png';
 const YANDEX_SEARCH_API_KEY = '253d660e-0ffd-47d9-bac7-96ce406dd312';
 
+// URL бэкенда с метками (es_analytical_system)
+const LOCATIONS_API_URL = 'http://localhost:8080/locations';
+
 let currentClusterer = null;
 let preloadedMarkerData = new Map(); // key = location.id, value = { originalUrl, blueUrl }
 let mapInstance = null;
 let originalFilterTop = null;
 let competitorsCollection = null; // Коллекция меток конкурентов
 let activeCompetitorsBalloon = null; // Текущий балун конкурентов
+
 // ========== ДАННЫЕ ЛОКАЦИЙ ==========
+// Локации подгружаются из es_analytical_system через fetchLocations().
+// Структура сохранена как { locations: [...], total: N }
+// для совместимости с существующим кодом, который обращается к locationsData.locations.
 const locationsData = {
-  locations: [
-    {
-      id: 'loc_1',
-      name: 'Локация 1',
-      address: 'ул. Примерная, д. 10, Москва',
-      coordinates: { lat: 55.7558, lon: 37.6173 },
-      region: 'Москва',
-      city: 'Москва',
-      description: 'Оживлённое место',
-      business_types_suitable: ['cafe', 'restaurant'],
-      traffic_score: 8.5,
-      competition_density: 2.3,
-      demographics: {
-        age_group: '26-35',
-        average_income: 75000,
-        interests: ['food', 'technology'],
-        population_density: 5000,
-      },
-      score: 0.95,
-      // image можно не указывать — будет использован DEFAULT_MARKER_IMAGE
-      images: ['/video/Ai_image.png', '/video/kaisa_1.png', 'https://via.placeholder.com/300x200?text=Image+3'],
-    },
-    {
-      id: 'loc_2',
-      name: 'Локация 2',
-      address: 'ул. Тверская, д. 5, Москва',
-      coordinates: { lat: 55.7584, lon: 37.6086 },
-      region: 'Москва',
-      city: 'Москва',
-      description: 'Оживлённое место',
-      business_types_suitable: ['shop', 'cafe'],
-      traffic_score: 9.2,
-      competition_density: 4.1,
-      demographics: {
-        age_group: '18-35',
-        average_income: 80000,
-        interests: ['shopping', 'food'],
-        population_density: 7000,
-      },
-      score: 0.88,
-      images: ['/video/kaisa_1.png', '/video/Ai_image.png', 'https://via.placeholder.com/300x200?text=Additional'],
-    },
-    {
-      id: 'loc_2',
-      name: 'Локация 2',
-      address: 'ул. Тверская, д. 5, Тамбов',
-      coordinates: { lat: 52.7212, lon: 41.4529 },
-      region: 'Тамбов',
-      city: 'Тамбов',
-      description: 'Оживлённое место',
-      business_types_suitable: ['shop', 'cafe'],
-      traffic_score: 7.0,
-      competition_density: 4.1,
-      demographics: {
-        age_group: '18-35',
-        average_income: 80000,
-        interests: ['shopping', 'food'],
-        population_density: 7000,
-      },
-      score: 0.88,
-      images: ['/video/kaisa_1.png', '/video/Ai_image.png', 'https://via.placeholder.com/300x200?text=Additional'],
-    },
-    {
-      id: 'loc_2',
-      name: 'Локация 2',
-      address: 'ул. Тверская, д. 5, Тамбов',
-      coordinates: { lat: 52.7212, lon: 41.6529 },
-      region: 'Тамбов',
-      city: 'Тамбов',
-      description: 'Оживлённое место',
-      business_types_suitable: ['shop', 'cafe'],
-      traffic_score: 2.0,
-      competition_density: 4.1,
-      demographics: {
-        age_group: '18-35',
-        average_income: 80000,
-        interests: ['shopping', 'food'],
-        population_density: 7000,
-      },
-      score: 0.3,
-      images: [],
-    },
-  ],
-  total: 2,
+  locations: [],
+  total: 0,
 };
+
+// Загрузка локаций из API.
+// На любой сетевой ошибке оставляем пустой массив — карта просто покажет "Меток пока нет".
+async function fetchLocations() {
+  try {
+    const resp = await fetch(LOCATIONS_API_URL);
+    if (!resp.ok) {
+      console.warn(`Не удалось загрузить локации: HTTP ${resp.status}`);
+      return;
+    }
+    const data = await resp.json();
+    const items = Array.isArray(data.locations) ? data.locations : [];
+
+    // Нормализация: убеждаемся что минимально необходимые поля есть и имеют правильные типы.
+    // Так UI-код (карусели, фильтры и т. п.) не упадёт, даже если из БД что-то пришло без поля.
+    for (const loc of items) {
+      if (!loc.coordinates) continue;
+      loc.coordinates.lat = Number(loc.coordinates.lat);
+      loc.coordinates.lon = Number(loc.coordinates.lon);
+      if (!Array.isArray(loc.business_types_suitable)) loc.business_types_suitable = [];
+      if (!loc.demographics) loc.demographics = {};
+      if (!Array.isArray(loc.demographics.interests)) loc.demographics.interests = [];
+      if (!Array.isArray(loc.images)) loc.images = [];
+      if (typeof loc.score !== 'number') loc.score = 0;
+    }
+
+    locationsData.locations = items.filter(l => l && l.coordinates && isFinite(l.coordinates.lat) && isFinite(l.coordinates.lon));
+    locationsData.total = locationsData.locations.length;
+  } catch (err) {
+    console.warn('Ошибка загрузки локаций:', err);
+  }
+}
 
 // ========== SIDEBAR FUNCTIONS ==========
 function openSidebar() {
@@ -1101,7 +1058,10 @@ function setupCitySelector(map) {
 }
 
 // ========== ИНИЦИАЛИЗАЦИЯ КАРТЫ С КЛАСТЕРИЗАЦИЕЙ ==========
-function initMap() {
+async function initMap() {
+  // Сначала тянем локации из бэкенда
+  await fetchLocations();
+
   const firstLocation = locationsData.locations[0];
   const center = firstLocation ? [firstLocation.coordinates.lat, firstLocation.coordinates.lon] : [55.7558, 37.6173];
 

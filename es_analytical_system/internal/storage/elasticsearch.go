@@ -12,7 +12,6 @@ import (
 
 	"github.com/akozadaev/go_es_analytical_system/internal/models"
 	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 // ElasticsearchStorage предоставляет методы для работы с Elasticsearch/OpenSearch.
@@ -76,32 +75,125 @@ func (es *ElasticsearchStorage) CreateIndex(ctx context.Context, mappingJSON str
 }
 
 // IndexLocation индексирует одну локацию в Elasticsearch/OpenSearch.
-// Если локация с таким ID уже существует, она будет обновлена.
+// Если локация с таким ID уже существует, она будет обновлена (upsert).
+// Использует прямой HTTP запрос для совместимости с OpenSearch.
 func (es *ElasticsearchStorage) IndexLocation(ctx context.Context, location *models.Location) error {
 	body, err := json.Marshal(location)
 	if err != nil {
 		return fmt.Errorf("failed to marshal location: %w", err)
 	}
 
-	req := esapi.IndexRequest{
-		Index:      es.index,
-		DocumentID: location.ID,
-		Body:       bytes.NewReader(body),
-		Refresh:    "true",
+	url := fmt.Sprintf("%s/%s/_doc/%s?refresh=true", es.baseURL, es.index, location.ID)
+	req, err := http.NewRequestWithContext(ctx, "PUT", url, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 
-	res, err := req.Do(ctx, es.client)
+	res, err := es.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to index location: %w", err)
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
-		body, _ := io.ReadAll(res.Body)
-		return fmt.Errorf("error indexing location: %s", string(body))
+	if res.StatusCode >= 400 {
+		respBody, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("error indexing location: status %d, body: %s", res.StatusCode, string(respBody))
 	}
 
 	return nil
+}
+
+// DeleteLocation удаляет локацию по её идентификатору.
+// Возвращает ошибку "location not found", если документ не существует.
+// Использует прямой HTTP запрос для совместимости с OpenSearch.
+func (es *ElasticsearchStorage) DeleteLocation(ctx context.Context, id string) error {
+	url := fmt.Sprintf("%s/%s/_doc/%s?refresh=true", es.baseURL, es.index, id)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	res, err := es.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to delete location: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode == 404 {
+		return fmt.Errorf("location not found")
+	}
+
+	if res.StatusCode >= 400 {
+		respBody, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("error deleting location: status %d, body: %s", res.StatusCode, string(respBody))
+	}
+
+	return nil
+}
+
+// ListAllLocations возвращает все локации из индекса.
+// Используется для отрисовки меток на пользовательской карте.
+// limit — максимальное количество результатов (при 0 используется 1000).
+// Использует прямой HTTP запрос для совместимости с OpenSearch.
+func (es *ElasticsearchStorage) ListAllLocations(ctx context.Context, limit int) ([]*models.Location, error) {
+	if limit <= 0 {
+		limit = 1000
+	}
+
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match_all": map[string]interface{}{},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return nil, fmt.Errorf("failed to encode query: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/%s/_search?size=%d", es.baseURL, es.index, limit)
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, &buf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	res, err := es.httpClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list locations: %w", err)
+	}
+	defer res.Body.Close()
+
+	// Если индекс ещё не создан — возвращаем пустой список, а не ошибку.
+	if res.StatusCode == 404 {
+		return []*models.Location{}, nil
+	}
+
+	if res.StatusCode >= 400 {
+		respBody, _ := io.ReadAll(res.Body)
+		return nil, fmt.Errorf("error listing locations: status %d, body: %s", res.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Hits struct {
+			Hits []struct {
+				Source models.Location `json:"_source"`
+			} `json:"hits"`
+		} `json:"hits"`
+	}
+
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	locations := make([]*models.Location, 0, len(result.Hits.Hits))
+	for _, hit := range result.Hits.Hits {
+		loc := hit.Source
+		locations = append(locations, &loc)
+	}
+
+	return locations, nil
 }
 
 // BulkIndexLocations индексирует несколько локаций за один запрос.
