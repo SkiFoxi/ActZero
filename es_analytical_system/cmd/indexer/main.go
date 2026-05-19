@@ -29,7 +29,7 @@ func main() {
 		log.Fatalf("Error creating Elasticsearch client: %v", err)
 	}
 
-	esStorage := storage.NewElasticsearchStorageWithURL(esClient, "locations", cfg.ElasticsearchURL)
+	esStorage := storage.NewElasticsearchStorageWithURL(esClient, "locations", cfg.ElasticsearchURL, cfg)
 
 	// Генерация тестовых данных .
 	locations := generateSampleLocations(100)
