@@ -307,8 +307,8 @@ function generateBalloonContent(location, currentIndex = 0) {
             .join('')}
         </div>
         <div class="info-row">
-          <div class="rating">Рейтинг: ${location.score}${starSvg}</div>
-          <div class="score-badge">${location.score >= 0.9 ? 'Высокий рейтинг' : location.score >= 0.7 ? 'Хороший рейтинг' : 'Средний рейтинг'}</div>
+          <div class="rating">Рейтинг: ${location.score.toFixed(1)}/10${starSvg}</div>
+          <div class="score-badge">${location.score >= 8 ? 'Высокий рейтинг' : location.score >= 6 ? 'Хороший рейтинг' : 'Средний рейтинг'}</div>
         </div>
         <div class="info-row">
           <div class="traffic-score">Трафик: ${location.traffic_score}/10</div>
@@ -666,24 +666,12 @@ function setupFilterPanel() {
   panel.style.display = 'none';
 
   // Элементы фильтров
+  const regionSelect = document.createElement('select');
+  regionSelect.className = 'filter-select';
   const citySelect = document.createElement('select');
   citySelect.className = 'filter-select';
   const typeSelect = document.createElement('select');
   typeSelect.className = 'filter-select';
-  const ratingMinInput = document.createElement('input');
-  ratingMinInput.type = 'number';
-  ratingMinInput.placeholder = 'Рейтинг от';
-  ratingMinInput.step = 0.1;
-  ratingMinInput.min = 0;
-  ratingMinInput.max = 1;
-  ratingMinInput.value = 0;
-  const ratingMaxInput = document.createElement('input');
-  ratingMaxInput.type = 'number';
-  ratingMaxInput.placeholder = 'Рейтинг до';
-  ratingMaxInput.step = 0.1;
-  ratingMaxInput.min = 0;
-  ratingMaxInput.max = 1;
-  ratingMaxInput.value = 1;
 
   const applyBtn = document.createElement('button');
   applyBtn.textContent = 'Применить';
@@ -695,44 +683,98 @@ function setupFilterPanel() {
   const resultsCountSpan = document.createElement('span');
   resultsCountSpan.className = 'filter-results-count';
 
-  // Заполнение селектов уникальными значениями
+  // Заполнение селектов уникальными значениями из уже загруженных локаций
+  const regionsSet = new Set();
   const citiesSet = new Set();
   const typesSet = new Set();
   locationsData.locations.forEach(loc => {
+    if (loc.region) regionsSet.add(loc.region);
     if (loc.city) citiesSet.add(loc.city);
     loc.business_types_suitable.forEach(t => typesSet.add(t));
   });
+  const regions = Array.from(regionsSet).sort();
   const cities = Array.from(citiesSet).sort();
   const types = Array.from(typesSet).sort();
 
+  regionSelect.innerHTML = '<option value="">Все регионы</option>' + regions.map(r => `<option value="${r}">${r}</option>`).join('');
   citySelect.innerHTML = '<option value="">Все города</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join('');
   typeSelect.innerHTML = '<option value="">Все типы</option>' + types.map(t => `<option value="${t}">${t === 'cafe' ? 'Кафе' : t === 'restaurant' ? 'Ресторан' : t === 'shop' ? 'Магазин' : t}</option>`).join('');
 
-  function applyFilters() {
+  // При выборе региона — фильтруем города
+  regionSelect.addEventListener('change', () => {
+    const selectedRegion = regionSelect.value;
+    const filteredCities = locationsData.locations
+      .filter(loc => !selectedRegion || loc.region === selectedRegion)
+      .map(loc => loc.city)
+      .filter(Boolean);
+    const uniqueCities = Array.from(new Set(filteredCities)).sort();
+    citySelect.innerHTML = '<option value="">Все города</option>' + uniqueCities.map(c => `<option value="${c}">${c}</option>`).join('');
+  });
+
+  // applyFilters: если заданы фильтры — запрашиваем у OpenSearch релевантные результаты
+  // через POST /locations/recommend, который возвращает метки отсортированные по score.
+  // Если фильтры не заданы — показываем все локации как есть.
+  async function applyFilters() {
+    const selectedRegion = regionSelect.value;
     const selectedCity = citySelect.value;
     const selectedType = typeSelect.value;
-    const minRating = parseFloat(ratingMinInput.value);
-    const maxRating = parseFloat(ratingMaxInput.value);
 
-    const filtered = locationsData.locations.filter(loc => {
-      if (selectedCity && loc.city !== selectedCity) return false;
-      if (selectedType && !loc.business_types_suitable.includes(selectedType)) return false;
-      const score = loc.score;
-      if (score < minRating || score > maxRating) return false;
-      return true;
-    });
+    applyBtn.disabled = true;
+    applyBtn.textContent = 'Загрузка...';
 
-    resultsCountSpan.textContent = `Найдено: ${filtered.length}`;
-    rebuildClusterer(filtered);
+    try {
+      if (selectedRegion || selectedType) {
+        // Есть фильтры — идём в OpenSearch за релевантными результатами
+        const body = {
+          region: selectedRegion,
+          city: selectedCity,
+          business_type: selectedType,
+          limit: 1000,
+        };
+        const resp = await fetch('http://localhost:8080/locations/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const items = Array.isArray(data.locations) ? data.locations : [];
+        // Нормализация полей
+        for (const loc of items) {
+          if (!loc.coordinates) continue;
+          loc.coordinates.lat = Number(loc.coordinates.lat);
+          loc.coordinates.lon = Number(loc.coordinates.lon);
+          if (!Array.isArray(loc.business_types_suitable)) loc.business_types_suitable = [];
+          if (typeof loc.score !== 'number') loc.score = 0;
+        }
+        const valid = items.filter(l => l && l.coordinates && isFinite(l.coordinates.lat) && isFinite(l.coordinates.lon));
+        resultsCountSpan.textContent = `Найдено: ${valid.length}`;
+        rebuildClusterer(valid);
+      } else {
+        // Фильтры не заданы — показываем все локации с их базовым score
+        resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
+        rebuildClusterer(locationsData.locations);
+      }
+    } catch (err) {
+      console.warn('Ошибка применения фильтров:', err);
+      resultsCountSpan.textContent = 'Ошибка загрузки';
+    } finally {
+      applyBtn.disabled = false;
+      applyBtn.textContent = 'Применить';
+    }
+
     panel.style.display = 'none';
   }
 
   function resetFilters() {
+    regionSelect.value = '';
     citySelect.value = '';
     typeSelect.value = '';
-    ratingMinInput.value = 0;
-    ratingMaxInput.value = 1;
-    applyFilters();
+    // Восстанавливаем все города
+    citySelect.innerHTML = '<option value="">Все города</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join('');
+    resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
+    rebuildClusterer(locationsData.locations);
+    panel.style.display = 'none';
   }
 
   applyBtn.addEventListener('click', applyFilters);
@@ -743,14 +785,9 @@ function setupFilterPanel() {
   filterTitle.className = 'filter-title';
   filterTitle.textContent = 'Фильтры';
   panel.appendChild(filterTitle);
+  panel.appendChild(regionSelect);
   panel.appendChild(citySelect);
   panel.appendChild(typeSelect);
-  const ratingRow = document.createElement('div');
-  ratingRow.className = 'rating-row';
-  ratingRow.appendChild(ratingMinInput);
-  ratingRow.appendChild(document.createTextNode(' — '));
-  ratingRow.appendChild(ratingMaxInput);
-  panel.appendChild(ratingRow);
   const btnRow = document.createElement('div');
   btnRow.className = 'filter-buttons';
   btnRow.appendChild(applyBtn);
@@ -767,19 +804,7 @@ function setupFilterPanel() {
     const isVisible = panel.style.display === 'flex';
     panel.style.display = isVisible ? 'none' : 'flex';
     if (!isVisible) {
-      // обновим счётчик при открытии
-      const selectedCity = citySelect.value;
-      const selectedType = typeSelect.value;
-      const minRating = parseFloat(ratingMinInput.value);
-      const maxRating = parseFloat(ratingMaxInput.value);
-      const count = locationsData.locations.filter(loc => {
-        if (selectedCity && loc.city !== selectedCity) return false;
-        if (selectedType && !loc.business_types_suitable.includes(selectedType)) return false;
-        const score = loc.score;
-        if (score < minRating || score > maxRating) return false;
-        return true;
-      }).length;
-      resultsCountSpan.textContent = `Найдено: ${count}`;
+      resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
     }
   });
 

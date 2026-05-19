@@ -27,6 +27,11 @@ type Config struct {
 	BuildVersion           string // Версия сборки
 	GitCommit              string // Хэш коммита Git
 
+	// Scoring — коэффициенты для расчёта рейтинга локаций в OpenSearch
+	ScoreTrafficWeight     float64 // Вес traffic_score (по умолчанию 0.7)
+	ScoreCompetitionWeight float64 // Вес competition_density (по умолчанию 0.3)
+	ScoreNormalizeDivisor  float64 // Делитель для нормализации в [0,1] (по умолчанию 7.0)
+
 	// Ollama (OpenAI-совместимый API через go_ollama_client)
 	OllamaBaseURL           string // Базовый URL, например http://localhost:11434/v1
 	OllamaChatModel         string // Модель для чата
@@ -57,6 +62,10 @@ func Load() *Config {
 		OllamaChatModel:         getEnv("OLLAMA_CHAT_MODEL", ""),
 		OllamaAutocompleteModel: getEnv("OLLAMA_AUTOCOMPLETE_MODEL", ""),
 		OllamaEmbedModel:        getEnv("OLLAMA_EMBED_MODEL", ""),
+
+		ScoreTrafficWeight:     getEnvFloat("SCORE_TRAFFIC_WEIGHT", 0.7),
+		ScoreCompetitionWeight: getEnvFloat("SCORE_COMPETITION_WEIGHT", 0.3),
+		ScoreNormalizeDivisor:  getEnvFloat("SCORE_NORMALIZE_DIVISOR", 7.0),
 	}
 }
 
@@ -89,6 +98,15 @@ func getEnvInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intVal, err := strconv.Atoi(value); err == nil {
 			return intVal
+		}
+	}
+	return defaultValue
+}
+
+func getEnvFloat(key string, defaultValue float64) float64 {
+	if value := os.Getenv(key); value != "" {
+		if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
+			return floatVal
 		}
 	}
 	return defaultValue

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/akozadaev/go_es_analytical_system/internal/config"
 	"github.com/akozadaev/go_es_analytical_system/internal/models"
 	"github.com/elastic/go-elasticsearch/v8"
 )
@@ -17,28 +18,34 @@ import (
 // ElasticsearchStorage предоставляет методы для работы с Elasticsearch/OpenSearch.
 // Использует прямые HTTP запросы для совместимости с OpenSearch.
 type ElasticsearchStorage struct {
-	client     *elasticsearch.Client // Официальный клиент Elasticsearch
-	index      string                 // Имя индекса для локаций
-	httpClient *http.Client           // HTTP клиент для прямых запросов
-	baseURL    string                 // Базовый URL Elasticsearch/OpenSearch
+	client     *elasticsearch.Client
+	index      string
+	httpClient *http.Client
+	baseURL    string
+
+	// Коэффициенты scoring — загружаются из конфига
+	scoreTrafficWeight     float64
+	scoreCompetitionWeight float64
+	scoreNormalizeDivisor  float64
 }
 
 // NewElasticsearchStorageWithURL создает новый экземпляр ElasticsearchStorage с указанным URL.
-// Используется для поддержки OpenSearch через прямые HTTP запросы.
-func NewElasticsearchStorageWithURL(client *elasticsearch.Client, index string, baseURL string) *ElasticsearchStorage {
+// Использует коэффициенты scoring из конфига.
+func NewElasticsearchStorageWithURL(client *elasticsearch.Client, index string, baseURL string, cfg *config.Config) *ElasticsearchStorage {
 	return &ElasticsearchStorage{
-		client:     client,
-		index:      index,
-		httpClient: &http.Client{},
-		baseURL:    baseURL,
+		client:                 client,
+		index:                  index,
+		httpClient:             &http.Client{},
+		baseURL:                baseURL,
+		scoreTrafficWeight:     cfg.ScoreTrafficWeight,
+		scoreCompetitionWeight: cfg.ScoreCompetitionWeight,
+		scoreNormalizeDivisor:  cfg.ScoreNormalizeDivisor,
 	}
 }
 
 // NewElasticsearchStorage создает новый экземпляр ElasticsearchStorage с URL по умолчанию.
-// Использует http://localhost:9200 как базовый URL.
-func NewElasticsearchStorage(client *elasticsearch.Client, index string) *ElasticsearchStorage {
-	// Используем значение по умолчанию, если URL не передан
-	return NewElasticsearchStorageWithURL(client, index, "http://localhost:9200")
+func NewElasticsearchStorage(client *elasticsearch.Client, index string, cfg *config.Config) *ElasticsearchStorage {
+	return NewElasticsearchStorageWithURL(client, index, "http://localhost:9200", cfg)
 }
 
 // CreateIndex создает индекс в Elasticsearch/OpenSearch с заданным маппингом.
@@ -141,9 +148,29 @@ func (es *ElasticsearchStorage) ListAllLocations(ctx context.Context, limit int)
 		limit = 1000
 	}
 
+	// Новый рейтинг: трафик 40%, демография 30%, низкая конкуренция 20%, интересы 10%.
+	script := `
+		double traffic = doc['traffic_score'].value * 0.4;
+		double demographics = ((doc['demographics.population_density'].value / 1000.0) + (doc['demographics.average_income'].value / 100000.0)) * 0.15;
+		double competition = (1.0 - (doc['competition_density'].value / 10.0)) * 0.2;
+		double interests = 0.1;
+		double rating = (traffic + demographics + competition + interests) * 10;
+		return rating;
+	`
+
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
-			"match_all": map[string]interface{}{},
+			"function_score": map[string]interface{}{
+				"query": map[string]interface{}{
+					"match_all": map[string]interface{}{},
+				},
+				"script_score": map[string]interface{}{
+					"script": map[string]interface{}{
+						"source": script,
+					},
+				},
+				"boost_mode": "replace",
+			},
 		},
 	}
 
@@ -179,6 +206,7 @@ func (es *ElasticsearchStorage) ListAllLocations(ctx context.Context, limit int)
 		Hits struct {
 			Hits []struct {
 				Source models.Location `json:"_source"`
+				Score  float64         `json:"_score"`
 			} `json:"hits"`
 		} `json:"hits"`
 	}
@@ -190,6 +218,7 @@ func (es *ElasticsearchStorage) ListAllLocations(ctx context.Context, limit int)
 	locations := make([]*models.Location, 0, len(result.Hits.Hits))
 	for _, hit := range result.Hits.Hits {
 		loc := hit.Source
+		loc.Score = hit.Score // _score приходит от OpenSearch
 		locations = append(locations, &loc)
 	}
 
@@ -423,4 +452,3 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 
 	return query
 }
-

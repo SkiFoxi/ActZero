@@ -58,7 +58,7 @@ func main() {
 	log.Println("Elasticsearch/OpenSearch client initialized")
 
 	// Создание индекса с маппингом
-	esStorage := storage.NewElasticsearchStorageWithURL(esClient, "locations", cfg.ElasticsearchURL)
+	esStorage := storage.NewElasticsearchStorageWithURL(esClient, "locations", cfg.ElasticsearchURL, cfg)
 
 	// Пытаемся найти файл маппинга в разных местах
 	mappingPaths := []string{
