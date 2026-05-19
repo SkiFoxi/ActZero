@@ -151,7 +151,7 @@ func (es *ElasticsearchStorage) ListAllLocations(ctx context.Context, limit int)
 	// Новый рейтинг: трафик 40%, демография 30%, низкая конкуренция 20%, интересы 10%.
 	script := `
 		double traffic = doc['traffic_score'].value * 0.4;
-		double demographics = ((doc['demographics.population_density'].value / 1000.0) + (doc['demographics.average_income'].value / 100000.0)) * 0.15;
+		double demographics = ((doc['demographics.population_density'].value / 1000.0) + (doc['demographics.average_income'].value / 100000.0)) * 0.3;
 		double competition = (1.0 - (doc['competition_density'].value / 10.0)) * 0.2;
 		double interests = 0.1;
 		double rating = (traffic + demographics + competition + interests) * 10;
@@ -297,7 +297,7 @@ func (es *ElasticsearchStorage) GetLocation(ctx context.Context, id string) (*mo
 	}
 
 	var result struct {
-		Found  bool           `json:"found"`
+		Found  bool            `json:"found"`
 		Source models.Location `json:"_source"`
 	}
 
@@ -404,7 +404,7 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 	shouldClauses = append(shouldClauses, map[string]interface{}{
 		"range": map[string]interface{}{
 			"traffic_score": map[string]interface{}{
-				"gte": 7.0,
+				"gte":   7.0,
 				"boost": 2.0,
 			},
 		},
@@ -413,7 +413,7 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 	shouldClauses = append(shouldClauses, map[string]interface{}{
 		"range": map[string]interface{}{
 			"competition_density": map[string]interface{}{
-				"lte": 3.0,
+				"lte":   3.0,
 				"boost": 1.5,
 			},
 		},
@@ -422,8 +422,8 @@ func (es *ElasticsearchStorage) buildRecommendQuery(req *models.RecommendRequest
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
-				"must": mustClauses,
-				"should": shouldClauses,
+				"must":                 mustClauses,
+				"should":               shouldClauses,
 				"minimum_should_match": 0,
 			},
 		},
