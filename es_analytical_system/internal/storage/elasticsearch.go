@@ -155,7 +155,7 @@ func (es *ElasticsearchStorage) ListAllLocations(ctx context.Context, limit int)
 		double competition = (1.0 - (doc['competition_density'].value / 10.0)) * 0.2;
 		double interests = 0.1;
 		double rating = (traffic + demographics + competition + interests) * 10;
-		return rating;
+		return Math.min(rating, 100.0);
 	`
 
 	query := map[string]interface{}{
