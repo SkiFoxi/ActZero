@@ -600,15 +600,44 @@
   }
 
   function parseMeta(geo) {
-    const p = geo.properties;
-    const address = p.get('text') || '';
-    const components = p.get('metaDataProperty.GeocoderMetaData.Address.Components') || [];
-    let city = '', region = '';
-    for (const c of components) {
-      if (!city && (c.kind === 'locality' || c.kind === 'province')) city = c.name;
-      if (!region && c.kind === 'province') region = c.name;
-    }
-    return { address, city, region };
+      const properties = geo.properties;
+      const address = properties.get('text') || '';
+      const components = properties.get('metaDataProperty.GeocoderMetaData.Address.Components') || [];
+
+      let city = '';
+      let region = '';
+
+      for (const c of components) {
+          // Приоритет: locality (населённый пункт), потом administrative_area (если locality нет)
+          if (c.kind === 'locality' && !city) {
+              city = c.name;
+          }
+          if (c.kind === 'province' && !region) {
+              region = c.name;
+          }
+          // Если нет locality, возьмём administrative_area (но стараемся не брать округ)
+          if (!city && c.kind === 'administrative_area') {
+              city = c.name;
+          }
+      }
+
+      // Если город всё ещё не найден, попробуем извлечь из адресной строки
+      if (!city && address) {
+          const parts = address.split(',');
+          if (parts.length) {
+              city = parts[0].trim();
+          }
+      }
+
+      // Если регион не найден, тоже можно взять из адреса
+      if (!region && address) {
+          const parts = address.split(',');
+          if (parts.length > 1) {
+              region = parts[1].trim();
+          }
+      }
+
+      return { address, city, region };
   }
 
   // ========== ОТРИСОВКА МЕТКИ ==========
