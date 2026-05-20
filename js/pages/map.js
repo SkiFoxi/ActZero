@@ -683,7 +683,7 @@ function setupFilterPanel() {
   const resultsCountSpan = document.createElement('span');
   resultsCountSpan.className = 'filter-results-count';
 
-  // Заполнение селектов уникальными значениями из уже загруженных локаций
+  // Заполнение селектов
   const regionsSet = new Set();
   const citiesSet = new Set();
   const typesSet = new Set();
@@ -711,61 +711,56 @@ function setupFilterPanel() {
     citySelect.innerHTML = '<option value="">Все города</option>' + uniqueCities.map(c => `<option value="${c}">${c}</option>`).join('');
   });
 
-  // applyFilters: если заданы фильтры — запрашиваем у OpenSearch релевантные результаты
-  // через POST /locations/recommend, который возвращает метки отсортированные по score.
-  // Если фильтры не заданы — показываем все локации как есть.
+  // ========== ФИЛЬТРАЦИЯ (клиентская) ==========
   function applyFilters() {
-      const selectedRegion = regionSelect.value;
-      const selectedCity = citySelect.value;
-      const selectedType = typeSelect.value;
+    const selectedRegion = regionSelect.value;
+    const selectedCity = citySelect.value;
+    const selectedType = typeSelect.value;
 
-      applyBtn.disabled = true;
-      applyBtn.textContent = 'Фильтрация...';
+    applyBtn.disabled = true;
+    applyBtn.textContent = 'Фильтрация...';
 
-      // Небольшая задержка для имитации асинхронности (можно убрать)
-      setTimeout(() => {
-          try {
-              let filtered = [...locationsData.locations];
+    setTimeout(() => {
+      try {
+        let filtered = [...locationsData.locations];
+        if (selectedRegion) filtered = filtered.filter(loc => loc.region === selectedRegion);
+        if (selectedCity) filtered = filtered.filter(loc => loc.city === selectedCity);
+        if (selectedType) filtered = filtered.filter(loc => loc.business_types_suitable && loc.business_types_suitable.includes(selectedType));
 
-              if (selectedRegion) {
-                  filtered = filtered.filter(loc => loc.region === selectedRegion);
-              }
-              if (selectedCity) {
-                  filtered = filtered.filter(loc => loc.city === selectedCity);
-              }
-              if (selectedType) {
-                  filtered = filtered.filter(loc =>
-                      loc.business_types_suitable && loc.business_types_suitable.includes(selectedType)
-                  );
-              }
+        resultsCountSpan.textContent = `Найдено: ${filtered.length}`;
+        rebuildClusterer(filtered);
+      } catch (err) {
+        console.warn('Ошибка фильтрации:', err);
+        resultsCountSpan.textContent = 'Ошибка фильтрации';
+      } finally {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Применить';
+      }
+    }, 50);
 
-              resultsCountSpan.textContent = `Найдено: ${filtered.length}`;
-              rebuildClusterer(filtered);
-          } catch (err) {
-              console.warn('Ошибка фильтрации:', err);
-              resultsCountSpan.textContent = 'Ошибка фильтрации';
-          } finally {
-              applyBtn.disabled = false;
-              applyBtn.textContent = 'Применить';
-          }
-      }, 50);
-
-      panel.style.display = 'none';
+    panel.style.display = 'none';
+    // Возвращаем позицию фильтра
+    const filterContainer = document.querySelector('.filter-selector-container');
+    if (filterContainer && originalFilterTop !== null) {
+      filterContainer.style.top = originalFilterTop + 'px';
+    }
   }
 
   function resetFilters() {
-      regionSelect.value = '';
-      citySelect.value = '';
-      typeSelect.value = '';
+    regionSelect.value = '';
+    citySelect.value = '';
+    typeSelect.value = '';
 
-      // Восстанавливаем полный список городов (после возможного фильтра по региону)
-      const allCities = Array.from(new Set(locationsData.locations.map(loc => loc.city).filter(Boolean))).sort();
-      citySelect.innerHTML = '<option value="">Все города</option>' +
-          allCities.map(c => `<option value="${c}">${c}</option>`).join('');
+    const allCities = Array.from(new Set(locationsData.locations.map(loc => loc.city).filter(Boolean))).sort();
+    citySelect.innerHTML = '<option value="">Все города</option>' + allCities.map(c => `<option value="${c}">${c}</option>`).join('');
 
-      resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
-      rebuildClusterer(locationsData.locations);
-      panel.style.display = 'none';
+    resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
+    rebuildClusterer(locationsData.locations);
+    panel.style.display = 'none';
+    const filterContainer = document.querySelector('.filter-selector-container');
+    if (filterContainer && originalFilterTop !== null) {
+      filterContainer.style.top = originalFilterTop + 'px';
+    }
   }
 
   applyBtn.addEventListener('click', applyFilters);
@@ -790,30 +785,77 @@ function setupFilterPanel() {
   container.appendChild(panel);
   document.body.appendChild(container);
 
-  toggleBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const isVisible = panel.style.display === 'flex';
-    panel.style.display = isVisible ? 'none' : 'flex';
-    if (!isVisible) {
-      resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!container.contains(e.target)) {
-      panel.style.display = 'none';
-    }
-  });
-    // Сохраняем исходное вертикальное положение фильтра
-  if (originalFilterTop === null) {
+  // ========== УПРАВЛЕНИЕ ПОЗИЦИЕЙ ФИЛЬТРА ПРИ ОТКРЫТЫХ ГОРОДАХ ==========
+  function updateFilterPosition() {
+    const cityPanel = document.querySelector('.city-selector-panel');
+    const isCityOpen = cityPanel && cityPanel.style.display === 'flex';
     const filterContainer = document.querySelector('.filter-selector-container');
-    if (filterContainer) {
-      const computedTop = parseInt(getComputedStyle(filterContainer).top);
-      originalFilterTop = isNaN(computedTop) ? 160 : computedTop;
+    if (!filterContainer || originalFilterTop === null) return;
+
+    if (isCityOpen && panel.style.display === 'flex') {
+      // Панель городов открыта и фильтры открыты – сдвигаем фильтры вниз
+      const cityPanelHeight = cityPanel.offsetHeight;
+      filterContainer.style.top = (originalFilterTop + cityPanelHeight + 10) + 'px';
+    } else if (panel.style.display === 'flex') {
+      // Только фильтры открыты, города закрыты – на исходную позицию
       filterContainer.style.top = originalFilterTop + 'px';
     }
   }
+
+  // Закрытие панели фильтров
+  function closeFilterPanel() {
+    if (panel.style.display === 'flex') {
+      panel.style.display = 'none';
+      const filterContainer = document.querySelector('.filter-selector-container');
+      if (filterContainer && originalFilterTop !== null) {
+        filterContainer.style.top = originalFilterTop + 'px';
+      }
+    }
+  }
+  window.closeFilterPanel = closeFilterPanel;
+
+  // Открытие панели фильтров
+  function openFilterPanel() {
+    if (panel.style.display !== 'flex') {
+      panel.style.display = 'flex';
+      updateFilterPosition();
+      resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
+    }
+  }
+  window.openFilterPanel = openFilterPanel;
+
+  // Обработчик кнопки Фильтры
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isVisible = panel.style.display === 'flex';
+    if (!isVisible) {
+      openFilterPanel();
+    } else {
+      closeFilterPanel();
+    }
+  });
+
+  // Закрытие при клике вне контейнера
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target)) {
+      closeFilterPanel();
+    }
+  });
+
+  // Сохраняем исходную позицию фильтра
+  if (originalFilterTop === null) {
+    const computedTop = parseInt(getComputedStyle(container).top);
+    originalFilterTop = isNaN(computedTop) ? 160 : computedTop;
+    container.style.top = originalFilterTop + 'px';
+  }
   resultsCountSpan.textContent = `Найдено: ${locationsData.locations.length}`;
+
+  // Глобальный вызов для синхронизации из setupCitySelector
+  window.onCityPanelToggle = function(isOpen) {
+    if (panel.style.display === 'flex') {
+      updateFilterPosition();
+    }
+  };
 }
 // ========== МЕНЮ ВЫБОРА ГОРОДА С ПОИСКОМ ==========
 function setupCitySelector(map) {
@@ -874,7 +916,21 @@ function setupCitySelector(map) {
 
   let debounceTimer = null;
 
-  // Поиск города (вызывается при клике на кнопку или выборе подсказки)
+  // ----- ФУНКЦИЯ ЗАКРЫТИЯ ПАНЕЛИ ГОРОДОВ И ВОЗВРАТА ФИЛЬТРА -----
+  function closeCityPanel() {
+    if (panel.style.display === 'flex') {
+      panel.style.display = 'none';
+      // Уведомляем фильтры, что панель городов закрыта
+      if (window.onCityPanelToggle) window.onCityPanelToggle(false);
+      // Возвращаем фильтр на место (на случай, если фильтры открыты)
+      const filterContainer = document.querySelector('.filter-selector-container');
+      if (filterContainer && originalFilterTop !== null) {
+        filterContainer.style.top = originalFilterTop + 'px';
+      }
+    }
+  }
+
+  // Поиск города
   async function searchCity(query) {
     if (!query.trim()) return;
 
@@ -897,7 +953,7 @@ function setupCitySelector(map) {
 
       addToHistory(name, coords);
       map.setCenter(coords, 12);
-      panel.style.display = 'none';
+      closeCityPanel();
     } catch (err) {
       console.error(err);
       messageDiv.textContent = 'Ошибка при поиске. Попробуйте позже.';
@@ -908,7 +964,7 @@ function setupCitySelector(map) {
     }
   }
 
-  // Сохранение истории (максимум 3 записи)
+  // Сохранение истории
   function addToHistory(name, coords) {
     let history = JSON.parse(localStorage.getItem('citySearchHistory') || '[]');
     history = history.filter(item => item.name !== name);
@@ -934,13 +990,13 @@ function setupCitySelector(map) {
       li.textContent = item.name;
       li.addEventListener('click', () => {
         map.setCenter(item.coords, 12);
-        panel.style.display = 'none';
+        closeCityPanel();
       });
       historyList.appendChild(li);
     });
   }
 
-  // Загрузка подсказок – предпочтительно suggest, fallback геокодер
+  // Загрузка подсказок
   async function loadSuggestions(query) {
     if (!query.trim() || query.length < 2) {
       suggestionsContainer.style.display = 'none';
@@ -1017,59 +1073,55 @@ function setupCitySelector(map) {
     }
   });
 
-  // Закрытие подсказок при потере фокуса
   searchInput.addEventListener('blur', () => {
     setTimeout(() => {
       suggestionsContainer.style.display = 'none';
     }, 200);
   });
 
-  // Открытие/закрытие панели
+  // Открытие/закрытие панели городов
   toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     const isVisible = panel.style.display === 'flex';
-    panel.style.display = isVisible ? 'none' : 'flex';
-
-    // Смещение фильтра
     const filterContainer = document.querySelector('.filter-selector-container');
-    if (filterContainer) {
-      if (!isVisible) {
-        // Открываем панель города → сдвигаем фильтр вниз
+
+    if (!isVisible) {
+      // Открываем панель городов
+      panel.style.display = 'flex';
+      // Сдвигаем фильтры вниз, если они открыты, через уведомление
+      if (window.onCityPanelToggle) window.onCityPanelToggle(true);
+      // Если требуется физически сдвинуть фильтр прямо здесь, можно сделать, но лучше положиться на updateFilterPosition
+      // Тем не менее, если фильтры закрыты, то их позиция не важна; если открыты – обновим
+      if (filterContainer && originalFilterTop !== null && window.updateFilterPosition) {
+        // вызовем обновление позиции, если функция существует
+        setTimeout(() => window.updateFilterPosition(), 10);
+      } else if (filterContainer && originalFilterTop !== null) {
+        // fallback: при отсутствии updateFilterPosition делаем сдвиг вручную
         const panelHeight = panel.offsetHeight;
         let filterTop = parseInt(filterContainer.style.top);
         if (isNaN(filterTop)) filterTop = 160;
         if (originalFilterTop === null) originalFilterTop = filterTop;
-        filterContainer.style.top = (filterTop + panelHeight + 10) + 'px';
-      } else {
-        // Закрываем панель города → возвращаем фильтр на место
-        if (originalFilterTop !== null) {
-          filterContainer.style.top = originalFilterTop + 'px';
-        }
+        filterContainer.style.top = (originalFilterTop + panelHeight + 10) + 'px';
       }
-    }
-
-    if (!isVisible) {
       searchInput.focus();
       renderHistory();
       suggestionsContainer.style.display = 'none';
+    } else {
+      closeCityPanel();
     }
   });
 
   // Закрытие при клике вне меню
   document.addEventListener('click', (e) => {
     if (!selectorContainer.contains(e.target)) {
-      if (panel.style.display === 'flex') {
-        panel.style.display = 'none';
-        // Возвращаем фильтр на место
-        const filterContainer = document.querySelector('.filter-selector-container');
-        if (filterContainer && originalFilterTop !== null) {
-          filterContainer.style.top = originalFilterTop + 'px';
-        }
-      }
+      closeCityPanel();
     }
   });
 
-  // Инициализация
+  // Делаем функцию закрытия доступной глобально
+  window.closeCityPanel = closeCityPanel;
+
+  // Инициализация истории
   renderHistory();
 }
 
