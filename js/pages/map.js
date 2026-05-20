@@ -642,13 +642,6 @@ function rebuildClusterer(filteredLocations) {
   clusterer.add(placemarks);
   mapInstance.geoObjects.add(clusterer);
   currentClusterer = clusterer;
-
-  // Обновить границы по отфильтрованным точкам
-  if (filteredLocations.length > 0) {
-    const coordsArray = filteredLocations.map(loc => [loc.coordinates.lat, loc.coordinates.lon]);
-    const bounds = ymaps.util.bounds.fromPoints(coordsArray);
-    mapInstance.setBounds(bounds, { checkZoomRange: true, zoomMargin: 50 });
-  }
 }
 
 // ========== ПАНЕЛЬ ФИЛЬТРОВ ==========
