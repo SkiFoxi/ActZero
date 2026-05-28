@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS quiz_attempts;
+DROP TABLE IF EXISTS quiz_options;
+DROP TABLE IF EXISTS quiz_questions;
+DROP TABLE IF EXISTS quizzes;
+DROP TABLE IF EXISTS lesson_progress;
+DROP TABLE IF EXISTS lessons;
+DROP TABLE IF EXISTS courses;

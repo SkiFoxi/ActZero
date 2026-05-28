@@ -700,50 +700,115 @@
 <script src="/js/auth-token.js"></script>
 
 <script>
-const coursesData = {
-  inProgress: [
-    { title:"SMM для малого бизнеса", icon:"📱", progress:75, lessons:"9 из 12", color:"#f5f3ff", tag:"Маркетинг", tagColor:"#7c3aed", category:"marketing" },
-    { title:"Финансовый учёт", icon:"💰", progress:45, lessons:"5 из 11", color:"#f0fdf4", tag:"Финансы", tagColor:"#16a34a", category:"finance" },
-    { title:"Управление командой", icon:"👥", progress:30, lessons:"3 из 10", color:"#eff6ff", tag:"Управление", tagColor:"#2563eb", category:"management" }
-  ],
-  recommended: [
-    { title:"Таргетинг в соцсетях", icon:"🎯", lessons:"8 уроков", level:"Новичок", lc:"#16a34a", lb:"#f0fdf4", color:"#fff7ed", category:"marketing" },
-    { title:"Аналитика для бизнеса", icon:"📊", lessons:"12 уроков", level:"Средний", lc:"#d97706", lb:"#fffbeb", color:"#eff6ff", category:"analytics" },
-    { title:"Продажи на Wildberries", icon:"📦", lessons:"10 уроков", level:"Профи", lc:"#dc2626", lb:"#fef2f2", color:"#fef2f2", category:"sales" }
-  ]
+// ── Courses API ────────────────────────────────────────────────────
+const COURSES_API = 'http://localhost:8082';
+
+const CATEGORY_STYLE = {
+  'Безопасность':         { color: '#fff1f2', tagColor: '#dc2626' },
+  'Право и соответствие': { color: '#eff6ff', tagColor: '#2563eb' },
+  'Маркетинг':            { color: '#f5f3ff', tagColor: '#7c3aed' },
+  'Финансы':              { color: '#f0fdf4', tagColor: '#16a34a' },
+  'Аналитика':            { color: '#fffbeb', tagColor: '#d97706' },
+  'default':              { color: '#f8fafc', tagColor: '#64748b' },
 };
 
-function renderCourses(filter = 'all') {
-  const ip = document.getElementById('in-progress-courses');
+const LEVEL_LABEL = {
+  'beginner':     { label: 'Новичок', lc: '#16a34a', lb: '#f0fdf4' },
+  'intermediate': { label: 'Средний', lc: '#d97706', lb: '#fffbeb' },
+  'advanced':     { label: 'Профи',   lc: '#dc2626', lb: '#fef2f2' },
+};
+
+let _allCourses = null;
+
+async function loadCoursesFromAPI() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  try {
+    const res = await fetch(`${COURSES_API}/courses`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn('Courses API недоступен:', e);
+    return null;
+  }
+}
+
+async function renderCourses(filter = 'all') {
+  const ip  = document.getElementById('in-progress-courses');
   const rec = document.getElementById('recommended-courses');
   if (!ip || !rec) return;
-  const fip = filter === 'all' ? coursesData.inProgress : coursesData.inProgress.filter(c => c.category === filter);
-  ip.innerHTML = fip.map(c => `
-    <div class="course-card">
+
+  ip.innerHTML  = '<div style="color:#94a3b8;font-size:13px;padding:8px">Загрузка...</div>';
+  rec.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:8px">Загрузка...</div>';
+
+  if (!_allCourses) _allCourses = await loadCoursesFromAPI();
+
+  if (!_allCourses || _allCourses.length === 0) {
+    ip.innerHTML  = '<div style="color:#94a3b8;font-size:13px;padding:8px">Нет активных курсов</div>';
+    rec.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:8px">Нет рекомендаций</div>';
+    return;
+  }
+
+  const filtered = filter === 'all'
+    ? _allCourses
+    : _allCourses.filter(c => c.category.toLowerCase().includes(filter));
+
+  const inProgress = filtered.filter(c => c.progress > 0);
+  const notStarted = filtered.filter(c => c.progress === 0);
+
+  ip.innerHTML = inProgress.map(c => {
+    const cs   = CATEGORY_STYLE[c.category] || CATEGORY_STYLE['default'];
+    const prog = Math.round(c.progress);
+    return `
+    <div class="course-card" onclick="openCourse('${c.id}')" style="cursor:pointer">
       <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:10px">
-        <div style="width:40px;height:40px;border-radius:10px;background:${c.color};display:flex;align-items:center;justify-content:center;font-size:18px">${c.icon}</div>
-        <span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:3px 8px;border-radius:20px;font-weight:600">${c.progress}%</span>
+        <div style="width:40px;height:40px;border-radius:10px;background:${cs.color};display:flex;align-items:center;justify-content:center;font-size:18px">${c.icon || '📚'}</div>
+        <span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:3px 8px;border-radius:20px;font-weight:600">${prog}%</span>
       </div>
       <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px">${c.title}</div>
-      <div style="font-size:11px;font-weight:600;color:${c.tagColor};margin-bottom:8px">${c.tag}</div>
-      <div class="prog-bar" style="margin-bottom:8px"><div class="prog-fill" style="width:${c.progress}%"></div></div>
+      <div style="font-size:11px;font-weight:600;color:${cs.tagColor};margin-bottom:8px">${c.category}</div>
+      <div class="prog-bar" style="margin-bottom:8px"><div class="prog-fill" style="width:${prog}%"></div></div>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:11px;color:#94a3b8">${c.lessons} уроков</span>
-        <button style="font-size:11px;color:#2563eb;font-weight:600;background:none;border:none;cursor:pointer">Продолжить</button>
+        <span style="font-size:11px;color:#94a3b8">${c.lesson_count} уроков</span>
+        <button onclick="event.stopPropagation();openCourse('${c.id}')" style="font-size:11px;color:#2563eb;font-weight:600;background:none;border:none;cursor:pointer">Продолжить</button>
       </div>
-    </div>`).join('') || '<div style="color:#94a3b8;font-size:13px;padding:8px">Нет курсов</div>';
+    </div>`;
+  }).join('') || '<div style="color:#94a3b8;font-size:13px;padding:8px">Начните любой курс ниже</div>';
 
-  const frec = filter === 'all' ? coursesData.recommended : coursesData.recommended.filter(c => c.category === filter);
-  rec.innerHTML = frec.map(c => `
-    <div class="course-card">
-      <div style="width:40px;height:40px;border-radius:10px;background:${c.color};display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px">${c.icon}</div>
+  rec.innerHTML = notStarted.map(c => {
+    const cs = CATEGORY_STYLE[c.category] || CATEGORY_STYLE['default'];
+    const ls = LEVEL_LABEL[c.level] || { label: 'Базовый', lc: '#64748b', lb: '#f8fafc' };
+    return `
+    <div class="course-card" onclick="openCourse('${c.id}')" style="cursor:pointer">
+      <div style="width:40px;height:40px;border-radius:10px;background:${cs.color};display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px">${c.icon || '📚'}</div>
       <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:8px">${c.title}</div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <span style="font-size:11px;color:#94a3b8">${c.lessons}</span>
-        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:${c.lb};color:${c.lc}">${c.level}</span>
+        <span style="font-size:11px;color:#94a3b8">${c.lesson_count} уроков</span>
+        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:${ls.lb};color:${ls.lc}">${ls.label}</span>
       </div>
-      <button style="width:100%;padding:8px;border:1.5px solid #2563eb;color:#2563eb;border-radius:9px;font-size:12px;font-weight:600;background:none;cursor:pointer">Начать обучение</button>
-    </div>`).join('') || '<div style="color:#94a3b8;font-size:13px;padding:8px">Нет курсов</div>';
+      <button onclick="event.stopPropagation();openCourse('${c.id}')" style="width:100%;padding:8px;border:1.5px solid #2563eb;color:#2563eb;border-radius:9px;font-size:12px;font-weight:600;background:none;cursor:pointer">Начать обучение</button>
+    </div>`;
+  }).join('') || '<div style="color:#94a3b8;font-size:13px;padding:8px">Все курсы уже начаты 🎉</div>';
+}
+
+function openCourse(courseId) {
+  // Открываем плеер курса в модальном окне поверх lkabinet
+  const overlay = document.createElement('div');
+  overlay.id = 'course-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#f5f6fa;overflow-y:auto;';
+  overlay.innerHTML = `<iframe id="course-frame" src="/htmllist/course_player.html?id=${courseId}" style="width:100%;height:100%;border:none;"></iframe>`;
+  document.body.appendChild(overlay);
+  // Слушаем сообщение от плеера о закрытии
+  window.addEventListener('message', function onMsg(e) {
+    if (e.data === 'course:close') {
+      overlay.remove();
+      window.removeEventListener('message', onMsg);
+      _allCourses = null; // сбрасываем кеш чтобы прогресс обновился
+      renderCourses();
+    }
+  });
 }
 
 document.querySelectorAll('.filter-tab').forEach(tab => {

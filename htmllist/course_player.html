@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ActZero — Курс</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Manrope', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f5f6fa; min-height: 100vh; }
+
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      height: 56px; background: #0f1623;
+      display: flex; align-items: center; gap: 16px; padding: 0 20px;
+      border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    }
+    .topbar-back {
+      display: flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 600;
+      cursor: pointer; background: none; border: none; transition: color 0.15s;
+    }
+    .topbar-back:hover { color: #fff; }
+    .topbar-title { font-size: 14px; font-weight: 700; color: #fff; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .topbar-prog-bar { width: 120px; height: 5px; background: rgba(255,255,255,0.12); border-radius: 999px; overflow: hidden; }
+    .topbar-prog-fill { height: 100%; background: #2563eb; border-radius: 999px; transition: width 0.4s ease; }
+    .topbar-prog-text { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; }
+
+    .layout { display: flex; padding-top: 56px; min-height: 100vh; }
+
+    .lessons-panel {
+      width: 260px; flex-shrink: 0; background: #fff;
+      border-right: 0.5px solid #e5e7eb;
+      position: fixed; top: 56px; left: 0; bottom: 0;
+      overflow-y: auto; padding: 16px 0;
+    }
+    .panel-title { font-size: 11px; color: #94a3b8; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; padding: 0 16px 10px; }
+    .lesson-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; cursor: pointer;
+      transition: background 0.15s; border-left: 3px solid transparent;
+    }
+    .lesson-item:hover { background: #f8fafc; }
+    .lesson-item.active { background: #eff6ff; border-left-color: #2563eb; }
+    .lesson-item.completed .lesson-num { background: #16a34a; color: #fff; }
+    .lesson-num {
+      width: 24px; height: 24px; border-radius: 50%; background: #f1f5f9;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #64748b; flex-shrink: 0;
+    }
+    .lesson-item.active .lesson-num { background: #2563eb; color: #fff; }
+    .lesson-name { font-size: 12px; color: #0f172a; font-weight: 500; line-height: 1.4; }
+    .lesson-item.active .lesson-name { font-weight: 700; color: #2563eb; }
+
+    .quiz-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; cursor: pointer;
+      transition: background 0.15s; border-left: 3px solid transparent;
+      margin-top: 8px; border-top: 0.5px solid #e5e7eb;
+    }
+    .quiz-item:hover { background: #f8fafc; }
+    .quiz-item.active { background: #fff7ed; border-left-color: #f59e0b; }
+    .quiz-icon {
+      width: 24px; height: 24px; border-radius: 50%; background: #fff7ed;
+      display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0;
+    }
+    .quiz-name { font-size: 12px; color: #0f172a; font-weight: 600; }
+
+    .content-area { flex: 1; margin-left: 260px; padding: 28px 32px; max-width: 860px; }
+
+    .lesson-content-card {
+      background: #fff; border-radius: 14px;
+      border: 0.5px solid #e5e7eb; padding: 32px; margin-bottom: 20px;
+    }
+    .lesson-content-card h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 16px; }
+    .lesson-content-card h3 { font-size: 15px; font-weight: 700; color: #0f172a; margin: 20px 0 10px; }
+    .lesson-content-card p { font-size: 14px; color: #334155; line-height: 1.7; margin-bottom: 12px; }
+    .lesson-content-card ul, .lesson-content-card ol { padding-left: 20px; margin-bottom: 12px; }
+    .lesson-content-card li { font-size: 14px; color: #334155; line-height: 1.7; margin-bottom: 6px; }
+    .lesson-content-card strong { color: #0f172a; font-weight: 700; }
+    .lesson-content-card code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #e11d48; }
+    .lesson-content-card blockquote { border-left: 3px solid #2563eb; padding: 10px 16px; background: #eff6ff; border-radius: 0 8px 8px 0; margin: 12px 0; }
+
+    .nav-buttons { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .btn-prev { padding: 10px 20px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px; font-weight: 600; color: #64748b; background: #fff; cursor: pointer; font-family: 'Manrope', sans-serif; }
+    .btn-prev:hover { border-color: #94a3b8; }
+    .btn-next { padding: 10px 24px; background: #2563eb; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Manrope', sans-serif; }
+    .btn-next:hover { background: #1d4ed8; }
+    .btn-complete { padding: 10px 24px; background: #16a34a; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Manrope', sans-serif; }
+    .btn-complete:hover { background: #15803d; }
+    .completed-badge { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; background: #f0fdf4; color: #16a34a; border-radius: 20px; font-size: 12px; font-weight: 700; }
+
+    .quiz-card { background: #fff; border-radius: 14px; border: 0.5px solid #e5e7eb; padding: 32px; margin-bottom: 20px; }
+    .quiz-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .quiz-header-icon { font-size: 28px; }
+    .quiz-header-title { font-size: 18px; font-weight: 800; color: #0f172a; }
+    .quiz-header-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .question-block { margin-bottom: 28px; }
+    .question-text { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+    .question-num { font-size: 11px; color: #94a3b8; margin-bottom: 6px; }
+    .option-btn {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; padding: 11px 14px; margin-bottom: 8px;
+      border: 1.5px solid #e5e7eb; border-radius: 10px;
+      background: #fff; cursor: pointer; text-align: left;
+      font-size: 13px; color: #334155; font-weight: 500;
+      transition: all 0.15s; font-family: 'Manrope', sans-serif;
+    }
+    .option-btn:hover { border-color: #2563eb; background: #eff6ff; }
+    .option-btn.selected { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; font-weight: 700; }
+    .option-btn.correct { border-color: #16a34a; background: #f0fdf4; color: #15803d; font-weight: 700; }
+    .option-btn.wrong { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
+    .option-marker {
+      width: 20px; height: 20px; border-radius: 50%; border: 2px solid #e5e7eb;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px;
+    }
+    .option-btn.selected .option-marker { background: #2563eb; border-color: #2563eb; color: #fff; }
+    .option-btn.correct .option-marker { background: #16a34a; border-color: #16a34a; color: #fff; }
+    .option-btn.wrong .option-marker { background: #dc2626; border-color: #dc2626; color: #fff; }
+    .quiz-submit-btn {
+      width: 100%; padding: 13px; background: #2563eb; color: #fff; border: none;
+      border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: 'Manrope', sans-serif;
+    }
+    .quiz-submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+    .quiz-result { text-align: center; padding: 32px 24px; background: #f8fafc; border-radius: 12px; margin-top: 20px; }
+    .result-emoji { font-size: 48px; margin-bottom: 12px; }
+    .result-score { font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+    .result-passed { color: #16a34a; }
+    .result-failed { color: #dc2626; }
+    .btn-retry { padding: 10px 24px; background: #fff; color: #2563eb; border: 1.5px solid #2563eb; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; margin-right: 10px; font-family: 'Manrope', sans-serif; }
+    .btn-finish { padding: 10px 24px; background: #2563eb; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Manrope', sans-serif; }
+
+    .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; color: #94a3b8; font-size: 14px; gap: 12px; }
+    .spinner { width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      .lessons-panel { display: none; }
+      .content-area { margin-left: 0; padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="topbar-back" onclick="closeCourse()">← Назад</button>
+  <div class="topbar-title" id="course-title">Загрузка...</div>
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <div class="topbar-prog-bar"><div class="topbar-prog-fill" id="top-progress-fill" style="width:0%"></div></div>
+    <span class="topbar-prog-text" id="top-progress-text">0%</span>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="lessons-panel" id="lessons-panel">
+    <div class="panel-title">Уроки курса</div>
+    <div id="lessons-list"></div>
+  </div>
+  <div class="content-area" id="content-area">
+    <div class="loading-state" id="loading-state">
+      <div class="spinner"></div>
+      <span>Загружаем курс...</span>
+    </div>
+    <div id="lesson-view" style="display:none"></div>
+    <div id="quiz-view" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const COURSES_API = 'http://localhost:8082';
+const token = localStorage.getItem('token');
+const courseId = new URLSearchParams(location.search).get('id');
+
+if (!token || !courseId) closeCourse();
+
+let courseData = null;
+let quizData   = null;
+let currentLessonId = null;
+let quizAnswers = {};
+let quizSubmitted = false;
+
+// Закрываем плеер — либо через postMessage (если открыт в оверлее), либо history.back
+function closeCourse() {
+  if (window.parent !== window) {
+    window.parent.postMessage('course:close', '*');
+  } else {
+    history.back();
+  }
+}
+
+async function loadCourse() {
+  try {
+    const res = await fetch(`${COURSES_API}/courses/${courseId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.status === 401) { localStorage.removeItem('token'); closeCourse(); return; }
+    if (!res.ok) throw new Error();
+    courseData = await res.json();
+  } catch {
+    document.getElementById('loading-state').innerHTML =
+      `<div style="text-align:center"><div style="font-size:32px;margin-bottom:12px">😞</div><div style="font-weight:700;color:#0f172a;margin-bottom:12px">Курс не найден</div><button onclick="closeCourse()" style="padding:8px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:Manrope,sans-serif">Вернуться назад</button></div>`;
+    return;
+  }
+
+  try {
+    const qRes = await fetch(`${COURSES_API}/courses/${courseId}/quiz`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (qRes.ok) quizData = await qRes.json();
+  } catch (_) {}
+
+  renderAll();
+}
+
+function renderAll() {
+  const { course, lessons } = courseData;
+  document.title = `ActZero — ${course.title}`;
+  document.getElementById('course-title').textContent = course.title;
+  updateTopProgress();
+  renderLessonsPanel(lessons);
+  const firstNotDone = lessons.find(l => !l.is_completed) || lessons[0];
+  if (firstNotDone) {
+    document.getElementById('loading-state').style.display = 'none';
+    openLesson(firstNotDone.id);
+  }
+}
+
+function updateTopProgress() {
+  const { lessons } = courseData;
+  if (!lessons.length) return;
+  const done = lessons.filter(l => l.is_completed).length;
+  const pct  = Math.round(done / lessons.length * 100);
+  document.getElementById('top-progress-fill').style.width = pct + '%';
+  document.getElementById('top-progress-text').textContent = pct + '%';
+}
+
+function renderLessonsPanel(lessons) {
+  let html = lessons.map((l, i) => `
+    <div class="lesson-item ${l.is_completed ? 'completed' : ''} ${currentLessonId === l.id ? 'active' : ''}"
+         id="lesson-item-${l.id}" onclick="openLesson('${l.id}')">
+      <div class="lesson-num">${l.is_completed ? '✓' : i + 1}</div>
+      <div class="lesson-name">${l.title}</div>
+    </div>`).join('');
+
+  if (quizData) {
+    const passed = quizData.best_attempt?.passed;
+    html += `
+      <div class="quiz-item ${currentLessonId === 'quiz' ? 'active' : ''}"
+           id="lesson-item-quiz" onclick="openQuiz()">
+        <div class="quiz-icon">${passed ? '🏆' : '📝'}</div>
+        <div class="quiz-name">Квиз${passed ? ' ✓' : ''}</div>
+      </div>`;
+  }
+  document.getElementById('lessons-list').innerHTML = html;
+}
+
+function openLesson(lessonId) {
+  currentLessonId = lessonId;
+  const { lessons } = courseData;
+  const lesson = lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+
+  document.querySelectorAll('.lesson-item, .quiz-item').forEach(el => el.classList.remove('active'));
+  const item = document.getElementById(`lesson-item-${lessonId}`);
+  if (item) item.classList.add('active');
+
+  const idx    = lessons.indexOf(lesson);
+  const isLast = idx === lessons.length - 1;
+
+  let nextBtn = '';
+  if (lesson.is_completed) {
+    if (isLast && quizData) nextBtn = `<button class="btn-next" onclick="openQuiz()">Перейти к квизу →</button>`;
+    else if (!isLast)       nextBtn = `<button class="btn-next" onclick="openLesson('${lessons[idx+1].id}')">Следующий урок →</button>`;
+    else                    nextBtn = `<span class="completed-badge">✓ Все уроки пройдены</span>`;
+  } else {
+    if (isLast && quizData) nextBtn = `<button class="btn-complete" onclick="completeLesson('${lesson.id}', true)">Завершить и перейти к квизу ✓</button>`;
+    else if (!isLast)       nextBtn = `<button class="btn-complete" onclick="completeLesson('${lesson.id}', false, '${lessons[idx+1].id}')">Завершить и далее ✓</button>`;
+    else                    nextBtn = `<button class="btn-complete" onclick="completeLesson('${lesson.id}', false)">Завершить урок ✓</button>`;
+  }
+
+  document.getElementById('quiz-view').style.display   = 'none';
+  document.getElementById('lesson-view').style.display = 'block';
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('lesson-view').innerHTML = `
+    <div class="lesson-content-card">${lesson.content}</div>
+    <div class="nav-buttons">
+      ${idx > 0 ? `<button class="btn-prev" onclick="openLesson('${lessons[idx-1].id}')">← Назад</button>` : '<div></div>'}
+      ${nextBtn}
+    </div>`;
+}
+
+async function completeLesson(lessonId, goQuiz, nextId) {
+  try {
+    await fetch(`${COURSES_API}/courses/${courseId}/lessons/${lessonId}/complete`, {
+      method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+    });
+  } catch (_) {}
+  const lesson = courseData.lessons.find(l => l.id === lessonId);
+  if (lesson) lesson.is_completed = true;
+  updateTopProgress();
+  renderLessonsPanel(courseData.lessons);
+  if (goQuiz)       openQuiz();
+  else if (nextId)  openLesson(nextId);
+  else              openLesson(lessonId);
+}
+
+function openQuiz() {
+  if (!quizData) return;
+  currentLessonId = 'quiz';
+  document.querySelectorAll('.lesson-item, .quiz-item').forEach(el => el.classList.remove('active'));
+  const qi = document.getElementById('lesson-item-quiz');
+  if (qi) qi.classList.add('active');
+  document.getElementById('lesson-view').style.display   = 'none';
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('quiz-view').style.display     = 'block';
+  quizAnswers = {}; quizSubmitted = false;
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const { quiz } = quizData;
+  document.getElementById('quiz-view').innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-header">
+        <div class="quiz-header-icon">📝</div>
+        <div>
+          <div class="quiz-header-title">${quiz.title}</div>
+          <div class="quiz-header-sub">${quiz.questions.length} вопросов · порог прохождения 70%</div>
+        </div>
+      </div>
+      <div id="quiz-questions">
+        ${quiz.questions.map((q, qi) => `
+          <div class="question-block">
+            <div class="question-num">Вопрос ${qi+1} из ${quiz.questions.length}</div>
+            <div class="question-text">${q.text}</div>
+            ${q.options.map(o => `
+              <button class="option-btn" id="opt-${o.id}" onclick="selectOption('${q.id}','${o.id}')">
+                <div class="option-marker" id="marker-${o.id}"></div>${o.text}
+              </button>`).join('')}
+          </div>`).join('')}
+      </div>
+      <button class="quiz-submit-btn" id="quiz-submit-btn" onclick="submitQuiz()" disabled>Проверить ответы</button>
+    </div>`;
+}
+
+function selectOption(questionId, optionId) {
+  if (quizSubmitted) return;
+  const q = quizData.quiz.questions.find(q => q.id === questionId);
+  q.options.forEach(o => {
+    document.getElementById(`opt-${o.id}`)?.classList.remove('selected');
+    const m = document.getElementById(`marker-${o.id}`);
+    if (m) m.textContent = '';
+  });
+  quizAnswers[questionId] = optionId;
+  document.getElementById(`opt-${optionId}`)?.classList.add('selected');
+  const m = document.getElementById(`marker-${optionId}`);
+  if (m) m.textContent = '✓';
+  const allAnswered = quizData.quiz.questions.every(q => quizAnswers[q.id]);
+  const btn = document.getElementById('quiz-submit-btn');
+  if (btn) btn.disabled = !allAnswered;
+}
+
+async function submitQuiz() {
+  quizSubmitted = true;
+  const btn = document.getElementById('quiz-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Проверяем...'; }
+
+  const answers = Object.entries(quizAnswers).map(([qId, oId]) => ({ question_id: qId, option_id: oId }));
+  let result;
+  try {
+    const res = await fetch(`${COURSES_API}/courses/${courseId}/quiz/submit`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers })
+    });
+    result = await res.json();
+  } catch {
+    quizSubmitted = false;
+    if (btn) { btn.disabled = false; btn.textContent = 'Проверить ответы'; }
+    return;
+  }
+
+  const qv = document.getElementById('quiz-view').querySelector('.quiz-card');
+  if (!qv) return;
+  document.getElementById('quiz-questions').style.opacity = '0.5';
+  document.getElementById('quiz-questions').style.pointerEvents = 'none';
+  document.getElementById('quiz-submit-btn')?.remove();
+  qv.insertAdjacentHTML('beforeend', `
+    <div class="quiz-result">
+      <div class="result-emoji">${result.passed ? '🎉' : '💪'}</div>
+      <div class="result-score ${result.passed ? 'result-passed' : 'result-failed'}">${result.score} / ${result.total}</div>
+      <div style="font-size:13px;color:#94a3b8;margin-bottom:8px">${result.percent}% правильных ответов</div>
+      <div style="font-size:14px;color:#64748b;margin-bottom:20px">${result.message}</div>
+      <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+        ${!result.passed ? `<button class="btn-retry" onclick="openQuiz()">Попробовать ещё раз</button>` : ''}
+        <button class="btn-finish" onclick="closeCourse()">← Вернуться к курсам</button>
+      </div>
+    </div>`);
+
+  if (!quizData.best_attempt || result.score > (quizData.best_attempt?.score || 0)) {
+    quizData.best_attempt = { passed: result.passed, score: result.score };
+  }
+  renderLessonsPanel(courseData.lessons);
+}
+
+loadCourse();
+</script>
+</body>
+</html>

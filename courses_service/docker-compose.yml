@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: courses_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=courses_user
+      - POSTGRES_PASSWORD=courses_pass
+      - POSTGRES_DB=courses_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - courses_postgres_data:/var/lib/postgresql/data
+    networks:
+      - courses_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U courses_user -d courses_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  courses:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: courses_service
+    restart: unless-stopped
+    environment:
+      - PORT=8082
+      - DATABASE_URL=postgres://courses_user:courses_pass@postgres:5432/courses_db?sslmode=disable
+      - JWT_SECRET=supersecretkey12345678901234567890
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - courses_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  courses_postgres_data:
+
+networks:
+  courses_network:
+    driver: bridge
