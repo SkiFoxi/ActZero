@@ -2,10 +2,14 @@
 package handlers
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/akozadaev/go_es_analytical_system/internal/config"
@@ -268,6 +272,144 @@ func (h *Handlers) OllamaChat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeepSeekChat handles POST /deepseek/chat through a server-side DeepSeek proxy.
+func (h *Handlers) DeepSeekChat(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if strings.TrimSpace(h.cfg.DeepSeekAPIKey) == "" {
+		writeJSONError(w, http.StatusServiceUnavailable, "deepseek_api_key_missing", "Set DEEPSEEK_API_KEY on the API server")
+		return
+	}
+
+	var req models.DeepSeekChatRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	messages, err := normalizeDeepSeekMessages(req)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid_messages", err.Error())
+		return
+	}
+
+	content, err := h.callDeepSeek(r.Context(), messages)
+	if err != nil {
+		log.Printf("DeepSeek chat error: %v", err)
+		writeJSONError(w, http.StatusBadGateway, "deepseek_request_failed", err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(models.DeepSeekChatResponse{
+		Content: content,
+		Model:   h.cfg.DeepSeekModel,
+	}); err != nil {
+		log.Printf("Error encoding DeepSeek chat response: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func normalizeDeepSeekMessages(req models.DeepSeekChatRequest) ([]models.DeepSeekMessage, error) {
+	messages := req.Messages
+	if len(messages) == 0 && strings.TrimSpace(req.Prompt) != "" {
+		messages = []models.DeepSeekMessage{{Role: "user", Content: req.Prompt}}
+	}
+	if len(messages) == 0 {
+		return nil, fmt.Errorf("message is required")
+	}
+	if len(messages) > 24 {
+		messages = messages[len(messages)-24:]
+	}
+
+	normalized := make([]models.DeepSeekMessage, 0, len(messages)+1)
+	hasSystem := false
+	for _, msg := range messages {
+		role := strings.TrimSpace(msg.Role)
+		content := strings.TrimSpace(msg.Content)
+		if content == "" {
+			continue
+		}
+		switch role {
+		case "system":
+			hasSystem = true
+		case "user", "assistant":
+		default:
+			return nil, fmt.Errorf("unsupported role: %s", role)
+		}
+		normalized = append(normalized, models.DeepSeekMessage{Role: role, Content: content})
+	}
+	if len(normalized) == 0 {
+		return nil, fmt.Errorf("message is required")
+	}
+	if !hasSystem {
+		systemMessage := models.DeepSeekMessage{
+			Role:    "system",
+			Content: "You are an AI assistant inside the ActZero admin panel. Answer in Russian, be concise, and help administrators with map labels, business-location analysis, and product questions.",
+		}
+		normalized = append([]models.DeepSeekMessage{systemMessage}, normalized...)
+	}
+	return normalized, nil
+}
+
+func (h *Handlers) callDeepSeek(ctx context.Context, messages []models.DeepSeekMessage) (string, error) {
+	baseURL := strings.TrimRight(h.cfg.DeepSeekBaseURL, "/")
+	if baseURL == "" {
+		baseURL = "https://api.deepseek.com"
+	}
+
+	payload := map[string]interface{}{
+		"model":    h.cfg.DeepSeekModel,
+		"messages": messages,
+		"stream":   false,
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/chat/completions", bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+h.cfg.DeepSeekAPIKey)
+
+	client := &http.Client{Timeout: 90 * time.Second}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("DeepSeek returned %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var parsed struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
+		return "", err
+	}
+	if len(parsed.Choices) == 0 || strings.TrimSpace(parsed.Choices[0].Message.Content) == "" {
+		return "", fmt.Errorf("DeepSeek response did not contain content")
+	}
+	return parsed.Choices[0].Message.Content, nil
+}
+
 // OllamaAutocomplete обрабатывает POST /ollama/autocomplete — автодополнение кода через Ollama.
 //
 // @Summary      Автодополнение кода через Ollama
@@ -370,11 +512,15 @@ func (h *Handlers) GetReadiness(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeOllamaUpstreamError(w http.ResponseWriter, err error) {
+	writeJSONError(w, http.StatusBadGateway, "ollama_request_failed", err.Error())
+}
+
+func writeJSONError(w http.ResponseWriter, status int, code string, details string) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusBadGateway)
+	w.WriteHeader(status)
 	if encErr := json.NewEncoder(w).Encode(map[string]string{
-		"error":   "ollama_request_failed",
-		"details": err.Error(),
+		"error":   code,
+		"details": details,
 	}); encErr != nil {
 		log.Printf("encode Ollama error response: %v", encErr)
 	}

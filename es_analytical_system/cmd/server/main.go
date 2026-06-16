@@ -134,6 +134,9 @@ func main() {
 	router.HandleFunc("/locations/recommend", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}).Methods("OPTIONS")
+	router.HandleFunc("/deepseek/chat", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}).Methods("OPTIONS")
 
 	router.HandleFunc("/health", h.HealthCheck).Methods("GET")
 	router.HandleFunc("/locations/recommend", h.RecommendLocations).Methods("POST")
@@ -146,6 +149,7 @@ func main() {
 	router.HandleFunc("/readiness", h.GetReadiness).Methods("GET")
 	router.HandleFunc("/ollama/chat", h.OllamaChat).Methods("POST")
 	router.HandleFunc("/ollama/autocomplete", h.OllamaAutocomplete).Methods("POST")
+	router.HandleFunc("/deepseek/chat", h.DeepSeekChat).Methods("POST")
 
 	// Swagger UI
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(

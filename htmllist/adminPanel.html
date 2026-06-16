@@ -292,9 +292,155 @@
     }
     .loader-overlay.hidden { display: none; }
 
+    /* AI chat */
+    .ai-chat-launcher {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 80;
+      width: 54px;
+      height: 54px;
+      border: none;
+      border-radius: 18px;
+      background: #0f1623;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      box-shadow: 0 16px 40px rgba(15,22,35,0.25);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .ai-chat-launcher:hover { background: #1f2937; transform: translateY(-2px); }
+    .ai-chat-window {
+      position: fixed;
+      right: 24px;
+      bottom: 88px;
+      z-index: 80;
+      width: min(380px, calc(100vw - 32px));
+      height: min(560px, calc(100vh - 120px));
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      box-shadow: 0 24px 70px rgba(15,22,35,0.22);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .ai-chat-window.open { display: flex; }
+    .ai-chat-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #eef0f4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #fbfcff;
+    }
+    .ai-chat-kicker {
+      font-size: 10px;
+      font-weight: 800;
+      color: #2563eb;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .ai-chat-title { font-size: 14px; font-weight: 800; color: #111827; margin-top: 1px; }
+    .ai-chat-status { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .ai-chat-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      border: none;
+      background: #eef0f4;
+      color: #374151;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .ai-chat-close:hover { background: #e4e7ec; }
+    .ai-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      background: #f7f8fb;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .ai-message {
+      max-width: 86%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .ai-message.assistant {
+      align-self: flex-start;
+      background: #fff;
+      color: #111827;
+      border: 1px solid #e9ecf2;
+    }
+    .ai-message.user {
+      align-self: flex-end;
+      background: #2563eb;
+      color: #fff;
+    }
+    .ai-message.error {
+      align-self: flex-start;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fee2e2;
+    }
+    .ai-chat-form {
+      padding: 12px;
+      border-top: 1px solid #eef0f4;
+      background: #fff;
+      display: grid;
+      grid-template-columns: 1fr 42px;
+      gap: 8px;
+      align-items: end;
+    }
+    .ai-chat-input {
+      width: 100%;
+      min-height: 42px;
+      max-height: 120px;
+      resize: none;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.35;
+      background: #fafbfc;
+      outline: none;
+    }
+    .ai-chat-input:focus { border-color: #2563eb; background: #fff; }
+    .ai-chat-send {
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .ai-chat-send:hover { background: #1d4ed8; }
+    .ai-chat-send:disabled, .ai-chat-input:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
     @media (max-width: 900px) {
       .workspace { grid-template-columns: 1fr; }
       .panel { max-height: 45vh; }
+      .ai-chat-launcher { right: 16px; bottom: 16px; }
+      .ai-chat-window {
+        right: 16px;
+        bottom: 80px;
+        height: min(520px, calc(100vh - 104px));
+      }
     }
   </style>
 </head>
@@ -466,18 +612,38 @@
   </div>
 </div>
 
+<div class="ai-chat-window" id="aiChatWindow" aria-live="polite">
+  <div class="ai-chat-header">
+    <div>
+      <div class="ai-chat-kicker">DeepSeek</div>
+      <div class="ai-chat-title">AI-помощник</div>
+      <div class="ai-chat-status" id="aiChatStatus">Готов помочь с админкой</div>
+    </div>
+    <button class="ai-chat-close" type="button" onclick="toggleDeepSeekChat(false)" aria-label="Закрыть чат">×</button>
+  </div>
+  <div class="ai-chat-messages" id="aiChatMessages"></div>
+  <form class="ai-chat-form" id="aiChatForm">
+    <textarea class="ai-chat-input" id="aiChatInput" rows="1" placeholder="Спросите про метки, аналитику или проект"></textarea>
+    <button class="ai-chat-send" id="aiChatSend" type="submit" aria-label="Отправить">→</button>
+  </form>
+</div>
+<button class="ai-chat-launcher" type="button" onclick="toggleDeepSeekChat()" aria-label="Открыть AI-чат">AI</button>
+
 <div class="toast" id="toast"></div>
 
 <script>
   // ========== КОНФИГ ==========
   const API_BASE  = 'http://localhost:8080';   // es_analytical_system
   const AUTH_BASE = 'http://localhost:8081';   // go_oauth2_server
+  const DEEPSEEK_CHAT_URL = `${API_BASE}/deepseek/chat`;
 
   // ========== ГЛОБАЛЬНЫЕ ==========
   let locations = [];
   let map;
   let placemarks = {};
   let editingLocation = null;       // null — новая, иначе — редактируемая
+  let deepSeekMessages = [];
+  let deepSeekPending = false;
 
   // ========== ПРОВЕРКА РОЛИ ==========
   async function ensureAdmin() {
@@ -849,6 +1015,115 @@
     window.location.href = '/index.html';
   }
 
+  // ========== DEEPSEEK CHAT ==========
+  function toggleDeepSeekChat(forceOpen) {
+    const win = document.getElementById('aiChatWindow');
+    const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !win.classList.contains('open');
+    win.classList.toggle('open', shouldOpen);
+    if (shouldOpen) {
+      renderDeepSeekMessages();
+      setTimeout(() => document.getElementById('aiChatInput').focus(), 0);
+    }
+  }
+
+  function renderDeepSeekMessages() {
+    const list = document.getElementById('aiChatMessages');
+    const welcome = {
+      role: 'assistant',
+      content: 'Здравствуйте! Я AI-помощник ActZero. Могу помочь с метками на карте, анализом локаций и вопросами по админке.'
+    };
+    const messages = [welcome, ...deepSeekMessages];
+
+    list.innerHTML = messages.map(msg => {
+      const cls = msg.role === 'user' ? 'user' : msg.role === 'error' ? 'error' : 'assistant';
+      return `<div class="ai-message ${cls}">${escapeHtml(msg.content)}</div>`;
+    }).join('');
+    list.scrollTop = list.scrollHeight;
+  }
+
+  function setDeepSeekPending(isPending) {
+    deepSeekPending = isPending;
+    document.getElementById('aiChatInput').disabled = isPending;
+    document.getElementById('aiChatSend').disabled = isPending;
+    document.getElementById('aiChatStatus').textContent = isPending ? 'DeepSeek думает...' : 'Готов помочь с админкой';
+  }
+
+  async function sendDeepSeekMessage(text) {
+    const content = text.trim();
+    if (!content || deepSeekPending) return;
+
+    deepSeekMessages.push({ role: 'user', content });
+    renderDeepSeekMessages();
+    setDeepSeekPending(true);
+
+    try {
+      const apiMessages = deepSeekMessages
+        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+        .slice(-16);
+
+      const resp = await fetch(DEEPSEEK_CHAT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: apiMessages })
+      });
+
+      if (!resp.ok) {
+        let details = '';
+        try {
+          const err = await resp.json();
+          details = err.details || err.error || '';
+        } catch (_) {
+          details = await resp.text();
+        }
+        throw new Error(details || `HTTP ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      deepSeekMessages.push({
+        role: 'assistant',
+        content: data.content || 'DeepSeek вернул пустой ответ.'
+      });
+    } catch (err) {
+      const hint = String(err.message || '').includes('DEEPSEEK_API_KEY')
+        ? 'На сервере нужно задать переменную окружения DEEPSEEK_API_KEY.'
+        : err.message;
+      deepSeekMessages.push({
+        role: 'error',
+        content: `Не удалось получить ответ. ${hint}`
+      });
+    } finally {
+      setDeepSeekPending(false);
+      renderDeepSeekMessages();
+    }
+  }
+
+  function initDeepSeekChat() {
+    const form = document.getElementById('aiChatForm');
+    const input = document.getElementById('aiChatInput');
+
+    renderDeepSeekMessages();
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const text = input.value;
+      input.value = '';
+      input.style.height = '42px';
+      sendDeepSeekMessage(text);
+    });
+
+    input.addEventListener('input', () => {
+      input.style.height = '42px';
+      input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
+    });
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+  }
+
   // глобальные ссылки для onclick из HTML
   window.reloadAll        = reloadAll;
   window.focusOn          = focusOn;
@@ -858,6 +1133,9 @@
   window.closeEdit        = closeEdit;
   window.saveEdit         = saveEdit;
   window.logout           = logout;
+  window.toggleDeepSeekChat = toggleDeepSeekChat;
+
+  initDeepSeekChat();
 </script>
 
 </body>

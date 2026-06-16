@@ -37,6 +37,11 @@ type Config struct {
 	OllamaChatModel         string // Модель для чата
 	OllamaAutocompleteModel string // Модель для автодополнения кода
 	OllamaEmbedModel        string // Модель для эмбеддингов (на будущее)
+
+	// DeepSeek
+	DeepSeekAPIKey  string // API key for server-side DeepSeek requests
+	DeepSeekBaseURL string // DeepSeek API base URL
+	DeepSeekModel   string // Chat model for DeepSeek
 }
 
 // Load загружает конфигурацию из переменных окружения.
@@ -62,6 +67,10 @@ func Load() *Config {
 		OllamaChatModel:         getEnv("OLLAMA_CHAT_MODEL", ""),
 		OllamaAutocompleteModel: getEnv("OLLAMA_AUTOCOMPLETE_MODEL", ""),
 		OllamaEmbedModel:        getEnv("OLLAMA_EMBED_MODEL", ""),
+
+		DeepSeekAPIKey:  getEnv("DEEPSEEK_API_KEY", "sk-3afe2f8170f14b2baada9a17c40c0f85"),
+		DeepSeekBaseURL: getEnv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
+		DeepSeekModel:   getEnv("DEEPSEEK_MODEL", "deepseek-v4-flash"),
 
 		ScoreTrafficWeight:     getEnvFloat("SCORE_TRAFFIC_WEIGHT", 0.7),
 		ScoreCompetitionWeight: getEnvFloat("SCORE_COMPETITION_WEIGHT", 0.3),

@@ -307,7 +307,7 @@ function generateBalloonContent(location, currentIndex = 0) {
             .join('')}
         </div>
         <div class="info-row">
-          <div class="rating">Рейтинг: ${location.score.toFixed(1)}/10${starSvg}</div>
+          <div class="rating">Рейтинг: ${location.score.toFixed(1)}/100${starSvg}</div>
           <div class="score-badge">${location.score >= 8 ? 'Высокий рейтинг' : location.score >= 6 ? 'Хороший рейтинг' : 'Средний рейтинг'}</div>
         </div>
         <div class="info-row">

@@ -86,6 +86,24 @@ type OllamaChatResponse struct {
 	Content string `json:"content"`
 }
 
+// DeepSeekMessage is one chat turn sent to the DeepSeek-compatible API.
+type DeepSeekMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+// DeepSeekChatRequest is the request body for POST /deepseek/chat.
+type DeepSeekChatRequest struct {
+	Prompt   string            `json:"prompt,omitempty"`
+	Messages []DeepSeekMessage `json:"messages,omitempty"`
+}
+
+// DeepSeekChatResponse is the response body for POST /deepseek/chat.
+type DeepSeekChatResponse struct {
+	Content string `json:"content"`
+	Model   string `json:"model,omitempty"`
+}
+
 // OllamaAutocompleteRequest — тело POST /ollama/autocomplete.
 type OllamaAutocompleteRequest struct {
 	Prefix string `json:"prefix"`
